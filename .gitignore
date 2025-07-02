@@ -1,0 +1,29 @@
+# 🔒 Konfigurasi rahasia
+.env
+
+
+# 🚫 File data user & approval
+approval_status.json
+banned_users.json
+
+# 💾 Cache & hasil scraping
+cache_*.json
+get_info.json
+get_prelim.json
+progress_eps.json
+link.json
+
+# 🧪 Debug output
+debug_*.html
+
+# 🗑️ File log
+logs/log.txt.*
+*.log
+strike.log
+
+# 🔄 File salah/duplikat
+moderation.keywords.json
+
+# 🐍 Python cache
+__pycache__/
+*.pyc

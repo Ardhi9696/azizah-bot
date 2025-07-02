@@ -1,0 +1,29 @@
+.
+├── bot.py
+├── cache_eps.json
+├── cache_pengumuman.json
+├── error.log
+├── get_info.json
+├── get_prelim.json
+├── handlers
+│   ├── __init__.py
+│   ├── cek_eps.py
+│   ├── get_info.py
+│   ├── get_jadwal.py
+│   ├── get_pass1.py
+│   ├── get_pass2.py
+│   ├── get_prelim.py
+│   ├── get_reg.py
+│   ├── help.py
+│   ├── responder.py
+│   ├── start.py
+│   └── welcome.py
+├── log.txt
+├── requirements.txt
+├── respon.json
+├── run.py
+├── struktur.txt
+└── utils
+    ├── monitor_utils.py
+
+3 directories, 42 files
