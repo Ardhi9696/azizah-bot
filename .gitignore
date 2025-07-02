@@ -1,9 +1,6 @@
 # 🔒 Konfigurasi rahasia
 .env
 
-
-
-
 # 🧪 Debug output
 debug_*.html
 
@@ -12,9 +9,8 @@ logs/log.txt.*
 *.log
 strike.log
 
-
-
 # 🐍 Python cache
 __pycache__/
 *.pyc
 logs/log.txt
+.DS_Store
