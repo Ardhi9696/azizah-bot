@@ -1,0 +1,74 @@
+{
+  "0122024C50450997": {
+    "nama": "SHOLIHIN ARDHI IMRON",
+    "negara": "INDONESIA",
+    "bidang": "Manufacturing",
+    "tanggal": "20240419",
+    "mendengar": "47.5",
+    "bacaan": "50",
+    "total": "97.5",
+    "lulus_min": "92.5",
+    "status": "",
+    "masa": "~"
+  },
+  "0122024C50450900": {
+    "nama": "FADILAH IBNU",
+    "negara": "INDONESIA",
+    "bidang": "Manufacturing",
+    "tanggal": "20240522",
+    "mendengar": "40",
+    "bacaan": "47.5",
+    "total": "87.5",
+    "lulus_min": "92.5",
+    "status": "",
+    "masa": "~"
+  },
+  "0122025C90420428": {
+    "nama": "RIZUWAN NAIM",
+    "negara": "INDONESIA",
+    "bidang": "Manufacturing",
+    "tanggal": "20250411",
+    "mendengar": "100",
+    "bacaan": "80",
+    "total": "180",
+    "lulus_min": "150",
+    "status": "Y",
+    "masa": "20250604~20270603"
+  },
+  "0122025C50510325": {
+    "nama": "SETIAWAN DADANG GALANG",
+    "negara": "INDONESIA",
+    "bidang": "Fishing",
+    "tanggal": "20250603",
+    "mendengar": "42.5",
+    "bacaan": "32.5",
+    "total": "75",
+    "lulus_min": "80",
+    "status": "",
+    "masa": "~"
+  },
+  "0122025C50510326": {
+    "nama": "HANDIKA RONI",
+    "negara": "INDONESIA",
+    "bidang": "Fishing",
+    "tanggal": "20250602",
+    "mendengar": "50",
+    "bacaan": "42.5",
+    "total": "92.5",
+    "lulus_min": "80",
+    "status": "",
+    "masa": "~"
+  },
+  "0122022C50252928": {
+    "nama": "RIZKI WAHYU",
+    "negara": "INDONESIA",
+    "bidang": "Manufacturing",
+    "tanggal": "20230222",
+    "mendengar": "47.5",
+    "bacaan": "42.5",
+    "total": "90",
+    "lulus_min": "55",
+    "status": "",
+    "masa": "~"
+  }
+}

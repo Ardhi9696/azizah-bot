@@ -1,0 +1,64 @@
+{
+  "jadwal": [
+    {
+      "nation": "Nepal",
+      "title": "2025 Special EPS-TOPIK in Nepal(2)",
+      "type": "Special (CBT)",
+      "announcement_date": "2025-06-03"
+    },
+    {
+      "nation": "Philippines",
+      "title": "2025 Special EPS-TOPIK in Philippines(1)",
+      "type": "Special (CBT)",
+      "announcement_date": "2025-05-27"
+    },
+    {
+      "nation": "Nepal",
+      "title": "2025 Special EPS-TOPIK in Nepal",
+      "type": "Special (CBT)",
+      "announcement_date": "2025-05-26"
+    },
+    {
+      "nation": "Tajikistan",
+      "title": "2025 Skilled Workers Specialized in Root Industry Occupation in Tajikistan(2nd)_Welding",
+      "type": "General (PBT)",
+      "announcement_date": "2025-05-23"
+    },
+    {
+      "nation": "Tajikistan",
+      "title": "2025 Skilled Workers Specialized in Root Industry Occupation in Tajikistan(1st)_Welding",
+      "type": "General (PBT)",
+      "announcement_date": "2025-05-23"
+    },
+    {
+      "nation": "Kyrgyzstan",
+      "title": "2025 Special EPS-TOPIK in Kyrgyzstan",
+      "type": "Special (CBT)",
+      "announcement_date": "2025-05-22"
+    },
+    {
+      "nation": "Indonesia",
+      "title": "The 10th recruitment of the point system in Indonesia(Fishery)_Smarang(2)",
+      "type": "General (CBT)",
+      "announcement_date": "2025-05-16"
+    },
+    {
+      "nation": "Indonesia",
+      "title": "The 10th recruitment of the point system in Indonesia(Fishery)_Jakarta(2)",
+      "type": "General (CBT)",
+      "announcement_date": "2025-05-16"
+    },
+    {
+      "nation": "Indonesia",
+      "title": "The 10th recruitment of the point system in Indonesia(Fishery)_Jakarta",
+      "type": "General (CBT)",
+      "announcement_date": "2025-05-16"
+    },
+    {
+      "nation": "Indonesia",
+      "title": "The 10th recruitment of the point system in Indonesia(Fishery)_Smarang",
+      "type": "General (CBT)",
+      "announcement_date": "2025-05-16"
+    }
+  ]
+}

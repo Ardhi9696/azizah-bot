@@ -1,0 +1,84 @@
+{
+  "pendaftaran": [
+    {
+      "type": "CBT",
+      "title": "The 1st recruitment of the Point system in Tajikistan",
+      "nation": "Tajikistan",
+      "period": "2025-07-07 ~ 2025-07-09",
+      "test_date": "2025-08-02 ~ ..",
+      "result_date": "2025-08-15"
+    },
+    {
+      "type": "CBT",
+      "title": "The 10th recruitment of the point system in Mongolia (Agriculture)",
+      "nation": "Mongolia",
+      "period": "2025-06-23 ~ 2025-06-25",
+      "test_date": "2025-08-25 ~ ..",
+      "result_date": "2025-09-30"
+    },
+    {
+      "type": "CBT",
+      "title": "The 10th recruitment of the point system in Mongolia (Manufacturing)",
+      "nation": "Mongolia",
+      "period": "2025-06-23 ~ 2025-06-25",
+      "test_date": "2025-08-25 ~ ..",
+      "result_date": "2025-09-30"
+    },
+    {
+      "type": "CBT",
+      "title": "The 11st recruitment of the point system in Indonesia(Manufacturing)_Smarang",
+      "nation": "Indonesia",
+      "period": "2025-06-02 ~ 2025-06-04",
+      "test_date": "Undecided",
+      "result_date": "Undecided"
+    },
+    {
+      "type": "CBT",
+      "title": "The 11st recruitment of the point system in Indonesia(Manufacturing)_Jakarta",
+      "nation": "Indonesia",
+      "period": "2025-06-02 ~ 2025-06-04",
+      "test_date": "Undecided",
+      "result_date": "Undecided"
+    },
+    {
+      "type": "CBT",
+      "title": "2025 Special EPS-TOPIK in Nepal(2)",
+      "nation": "Nepal",
+      "period": "2025-06-02 ~ 2025-06-02",
+      "test_date": "2025-06-04 ~ ..",
+      "result_date": "2025-06-13"
+    },
+    {
+      "type": "CBT",
+      "title": "The 10th recruitment of the point system in Indonesia(Fishery)_Smarang(2)",
+      "nation": "Indonesia",
+      "period": "2025-04-09 ~ 2025-04-11",
+      "test_date": "2025-05-23 ~ ..",
+      "result_date": "2025-06-24"
+    },
+    {
+      "type": "CBT",
+      "title": "The 10th recruitment of the point system in Indonesia(Fishery)_Jakarta(2)",
+      "nation": "Indonesia",
+      "period": "2025-04-09 ~ 2025-04-11",
+      "test_date": "2025-05-23 ~ ..",
+      "result_date": "2025-06-24"
+    },
+    {
+      "type": "PBT",
+      "title": "2025 Skilled Workers Specialized in Root Industry Occupation in Tajikistan(2nd)_Welding",
+      "nation": "Tajikistan",
+      "period": "2025-03-10 ~ 2025-03-14",
+      "test_date": "2025-05-29 ~ ..",
+      "result_date": "2025-06-13"
+    },
+    {
+      "type": "PBT",
+      "title": "2025 Skilled Workers Specialized in Root Industry Occupation in Tajikistan(1st)_Welding",
+      "nation": "Tajikistan",
+      "period": "2025-03-10 ~ 2025-03-14",
+      "test_date": "2025-05-28 ~ ..",
+      "result_date": "2025-06-13"
+    }
+  ]
+}
