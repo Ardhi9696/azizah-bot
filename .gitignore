@@ -7,10 +7,11 @@ debug_*.html
 # 🗑️ File log
 logs/log.txt.*
 *.log
-strike.log
+logs/log.txt
 
 # 🐍 Python cache
 __pycache__/
 *.pyc
-logs/log.txt
+
+# 💻 cache
 .DS_Store
