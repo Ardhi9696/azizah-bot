@@ -17,3 +17,4 @@ strike.log
 # 🐍 Python cache
 __pycache__/
 *.pyc
+logs/log.txt
