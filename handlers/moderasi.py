@@ -10,6 +10,7 @@ from telegram.ext import ContextTypes
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from utils.constants import MODERATION_FILE, BANNED_FILE, RESPON_FILE, STRIKE_LOG
+from utils.anti_phishing import handle_phishing
 
 
 # Waktu reset per strike
@@ -318,7 +319,17 @@ async def cmd_restrike(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
 
 async def cmd_cekstrike(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
-    target = get_target_user(update) or update.effective_user
+    caller = update.effective_user
+    target = get_target_user(update)
+
+    # Jika tidak membalas siapa pun → default target adalah caller
+    if not target:
+        if caller.id == OWNER_ID:
+            return await update.message.reply_text(
+                "👑 Owner tidak bisa dicek strikenya 😎"
+            )
+        target = caller
+
     uid = target.id
     count = user_strikes.get(uid, 0)
     await update.message.reply_text(
@@ -370,6 +381,9 @@ async def lihat_admin(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
 # === Handler Utama ===
 async def moderasi(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    # 1. 🔍 Deteksi phishing dulu
+    if await handle_phishing(update, ctx):
+        return
     global last_global_command
 
     msg = update.message

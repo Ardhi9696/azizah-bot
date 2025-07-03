@@ -11,6 +11,7 @@ from telegram.ext import (
     CommandHandler,
     ContextTypes,
     MessageHandler,
+    CallbackQueryHandler,
     filters,
 )
 from handlers import start, help, cek_eps, welcome, moderasi
@@ -25,9 +26,7 @@ from handlers.get_kurs import kurs_default, kurs_idr, kurs_won
 from handlers.rules import show_rules
 from handlers.welcome import welcome_new_member
 from handlers.rules import agree_button
-from telegram.ext import CallbackQueryHandler
 from handlers.moderasi import cmd_tambahkata
-
 from handlers.callback_handler import button_handler
 from handlers.moderasi import (
     lihat_admin,
@@ -262,7 +261,6 @@ def main():
     application.add_handler(CommandHandler("resetbanall", cmd_resetbanall))
     application.add_handler(CommandHandler("tambahkata", cmd_tambahkata))
     application.add_handler(CallbackQueryHandler(button_handler))
-
     application.add_handler(
         MessageHandler(
             filters.StatusUpdate.NEW_CHAT_MEMBERS, welcome.welcome_new_member
@@ -270,7 +268,6 @@ def main():
     )
 
     application.add_handler(CallbackQueryHandler(agree_button, pattern="^agree_rules$"))
-
     application.add_handler(
         MessageHandler(
             filters.TEXT & (filters.REPLY | filters.Entity("mention")), simple_responder
