@@ -2,6 +2,14 @@
   "pendaftaran": [
     {
       "type": "CBT",
+      "title": "Virtual Test(Point System) in Tajikistan",
+      "nation": "Tajikistan",
+      "period": "Undecided",
+      "test_date": "Undecided",
+      "result_date": "Undecided"
+    },
+    {
+      "type": "CBT",
       "title": "The 1st recruitment of the Point system in Tajikistan",
       "nation": "Tajikistan",
       "period": "2025-07-07 ~ 2025-07-09",
@@ -70,14 +78,6 @@
       "nation": "Tajikistan",
       "period": "2025-03-10 ~ 2025-03-14",
       "test_date": "2025-05-29 ~ ..",
-      "result_date": "2025-06-13"
-    },
-    {
-      "type": "PBT",
-      "title": "2025 Skilled Workers Specialized in Root Industry Occupation in Tajikistan(1st)_Welding",
-      "nation": "Tajikistan",
-      "period": "2025-03-10 ~ 2025-03-14",
-      "test_date": "2025-05-28 ~ ..",
       "result_date": "2025-06-13"
     }
   ]
