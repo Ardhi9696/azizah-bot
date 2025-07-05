@@ -94,5 +94,17 @@
     "lulus_min": "150",
     "status": "Y",
     "masa": "20250604~20270603"
+  },
+  "0122024C50460890": {
+    "nama": "PRASITIO YUGO",
+    "negara": "INDONESIA",
+    "bidang": "Manufacturing",
+    "tanggal": "20240521",
+    "mendengar": "47.5",
+    "bacaan": "45",
+    "total": "92.5",
+    "lulus_min": "92.5",
+    "status": "",
+    "masa": "~"
   }
 }

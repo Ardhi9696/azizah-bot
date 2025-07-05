@@ -11,10 +11,9 @@ from telegram.ext import (
     CommandHandler,
     ContextTypes,
     MessageHandler,
-    CallbackQueryHandler,
     filters,
 )
-from handlers import start, help, cek_eps, welcome, moderasi
+from handlers import help, cek_eps, welcome, moderasi
 from handlers.command_wrapper import with_cooldown
 from handlers.get_info import get_info
 from handlers.get_prelim import get_prelim
@@ -25,9 +24,9 @@ from handlers.get_link import link_command
 from handlers.get_kurs import kurs_default, kurs_idr, kurs_won
 from handlers.rules import show_rules
 from handlers.welcome import welcome_new_member
-from handlers.rules import agree_button
+
+# from handlers.rules import agree_button
 from handlers.moderasi import cmd_tambahkata
-from handlers.callback_handler import button_handler
 from handlers.moderasi import (
     lihat_admin,
     moderasi,
@@ -47,13 +46,13 @@ from utils.monitor_utils import (
     format_pesan,
 )
 
-from handlers.approval_manager import (
-    # add_new_user,
-    # is_approved,
-    remove_user,
-    get_unapproved_users,
-    # save_user_status,
-)
+# from handlers.approval_manager import (
+#     # add_new_user,
+#     # is_approved,
+#     remove_user,
+#     get_unapproved_users,
+#     # save_user_status,
+# )
 from handlers.get_reg import get_reg
 from handlers.get_jadwal import get_jadwal
 from handlers.get_pass1 import get_pass1
@@ -149,19 +148,19 @@ async def get_chat_id(update, context):
 
 
 # ====== kick_unaprove =======
-async def kick_unapproved(context: ContextTypes.DEFAULT_TYPE):
-    for user_id in get_unapproved_users():
-        try:
-            await context.bot.ban_chat_member(chat_id=context.job.data, user_id=user_id)
-            await context.bot.unban_chat_member(
-                chat_id=context.job.data, user_id=user_id
-            )
-            remove_user(user_id)
-            logging.info(
-                f"🚫 User {user_id} dikeluarkan karena tidak menyetujui aturan."
-            )
-        except Exception as e:
-            logging.warning(f"Gagal mengeluarkan user {user_id}: {e}")
+# async def kick_unapproved(context: ContextTypes.DEFAULT_TYPE):
+#     for user_id in get_unapproved_users():
+#         try:
+#             await context.bot.ban_chat_member(chat_id=context.job.data, user_id=user_id)
+#             await context.bot.unban_chat_member(
+#                 chat_id=context.job.data, user_id=user_id
+#             )
+#             remove_user(user_id)
+#             logging.info(
+#                 f"🚫 User {user_id} dikeluarkan karena tidak menyetujui aturan."
+#             )
+#         except Exception as e:
+#             logging.warning(f"Gagal mengeluarkan user {user_id}: {e}")
 
 
 # ===== JOB Monitoring =====
@@ -234,7 +233,7 @@ def main():
 
     # === Command Handlers with Cooldown ===
     application.add_handler(CommandHandler("id", with_cooldown(get_chat_id)))
-    application.add_handler(CommandHandler("start", with_cooldown(start.start)))
+    # application.add_handler(CommandHandler("start", with_cooldown(start.start)))
     application.add_handler(CommandHandler("help", with_cooldown(help.help_command)))
     application.add_handler(CommandHandler("cek", with_cooldown(cek_eps.cek_eps)))
     application.add_handler(CommandHandler("get", with_cooldown(get_info)))
@@ -260,14 +259,14 @@ def main():
     application.add_handler(CommandHandler("resetstrikeall", cmd_resetstrikeall))
     application.add_handler(CommandHandler("resetbanall", cmd_resetbanall))
     application.add_handler(CommandHandler("tambahkata", cmd_tambahkata))
-    application.add_handler(CallbackQueryHandler(button_handler))
+
     application.add_handler(
         MessageHandler(
             filters.StatusUpdate.NEW_CHAT_MEMBERS, welcome.welcome_new_member
         )
     )
 
-    application.add_handler(CallbackQueryHandler(agree_button, pattern="^agree_rules$"))
+    # application.add_handler(CallbackQueryHandler(agree_button, pattern="^agree_rules$"))
     application.add_handler(
         MessageHandler(
             filters.TEXT & (filters.REPLY | filters.Entity("mention")), simple_responder
