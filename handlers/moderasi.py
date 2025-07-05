@@ -331,6 +331,16 @@ async def cmd_cekstrike(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         target = caller
 
     uid = target.id
+
+    if target.id == OWNER_ID:
+        return await update.message.reply_text("👑 Owner tidak bisa dicek strikenya 😎")
+
+    if target.is_bot:
+        return await update.message.reply_text("🤖 Bot tidak punya sistem strike.")
+
+    if is_admin(target.id):
+        return await update.message.reply_text("🛡 Admin tidak dikenai sistem strike.")
+
     count = user_strikes.get(uid, 0)
     await update.message.reply_text(
         f"📊 Strike {target.mention_html()}: {count}/{STRIKE_LIMIT}",

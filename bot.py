@@ -8,55 +8,18 @@ from dotenv import load_dotenv
 from utils.constants import MONITOR_INFO, MONITOR_PRELIM
 from telegram.ext import (
     Application,
-    CommandHandler,
     ContextTypes,
-    MessageHandler,
-    filters,
 )
-from handlers import help, cek_eps, welcome, moderasi
-from handlers.command_wrapper import with_cooldown
-from handlers.get_info import get_info
-from handlers.get_prelim import get_prelim
-from handlers.responder import simple_responder
-from handlers.get_eps import cek_kolom
-from handlers.tanya_meta import tanya_meta
-from handlers.get_link import link_command
-from handlers.get_kurs import kurs_default, kurs_idr, kurs_won
-from handlers.rules import show_rules
-from handlers.welcome import welcome_new_member
 
-# from handlers.rules import agree_button
-from handlers.moderasi import cmd_tambahkata
-from handlers.moderasi import (
-    lihat_admin,
-    moderasi,
-    cmd_ban,
-    cmd_unban,
-    cmd_restrike,
-    cmd_mute,
-    cmd_unmute,
-    cmd_cekstrike,
-    cmd_resetstrikeall,
-    cmd_resetbanall,
-)
+from handlers.register_handlers import register_handlers
+
+
 from utils.monitor_utils import (
     check_api_multi,
     is_waktu_aktif,
     is_jam_delapan,
     format_pesan,
 )
-
-# from handlers.approval_manager import (
-#     # add_new_user,
-#     # is_approved,
-#     remove_user,
-#     get_unapproved_users,
-#     # save_user_status,
-# )
-from handlers.get_reg import get_reg
-from handlers.get_jadwal import get_jadwal
-from handlers.get_pass1 import get_pass1
-from handlers.get_pass2 import get_pass2
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -130,6 +93,10 @@ def mask_token(token: str) -> str:
 # ===== Load .env =====
 load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
+if not TOKEN:
+    logger.critical("❌ BOT_TOKEN tidak ditemukan di .env. Keluar.")
+    exit(1)
+
 CHAT_ID = os.getenv("CHAT_ID")
 THREAD_ID = int(os.getenv("THREAD_ID", 0))
 
@@ -145,22 +112,6 @@ async def get_chat_id(update, context):
     await update.message.reply_text(
         f"📌 Chat ID: `{chat_id}`\n🧵 Thread ID: `{thread_id}`", parse_mode="Markdown"
     )
-
-
-# ====== kick_unaprove =======
-# async def kick_unapproved(context: ContextTypes.DEFAULT_TYPE):
-#     for user_id in get_unapproved_users():
-#         try:
-#             await context.bot.ban_chat_member(chat_id=context.job.data, user_id=user_id)
-#             await context.bot.unban_chat_member(
-#                 chat_id=context.job.data, user_id=user_id
-#             )
-#             remove_user(user_id)
-#             logging.info(
-#                 f"🚫 User {user_id} dikeluarkan karena tidak menyetujui aturan."
-#             )
-#         except Exception as e:
-#             logging.warning(f"Gagal mengeluarkan user {user_id}: {e}")
 
 
 # ===== JOB Monitoring =====
@@ -231,51 +182,8 @@ def main():
     application = Application.builder().token(TOKEN).build()
     application.add_error_handler(error_handler_function)
 
-    # === Command Handlers with Cooldown ===
-    application.add_handler(CommandHandler("id", with_cooldown(get_chat_id)))
-    # application.add_handler(CommandHandler("start", with_cooldown(start.start)))
-    application.add_handler(CommandHandler("help", with_cooldown(help.help_command)))
-    application.add_handler(CommandHandler("cek", with_cooldown(cek_eps.cek_eps)))
-    application.add_handler(CommandHandler("get", with_cooldown(get_info)))
-    application.add_handler(CommandHandler("prelim", with_cooldown(get_prelim)))
-    application.add_handler(CommandHandler("reg", with_cooldown(get_reg)))
-    application.add_handler(CommandHandler("jadwal", with_cooldown(get_jadwal)))
-    application.add_handler(CommandHandler("pass1", with_cooldown(get_pass1)))
-    application.add_handler(CommandHandler("pass2", with_cooldown(get_pass2)))
-    application.add_handler(CommandHandler("link", with_cooldown(link_command)))
-    application.add_handler(CommandHandler("cek_eps", with_cooldown(cek_kolom)))
-    application.add_handler(CommandHandler("tanya", with_cooldown(tanya_meta)))
-    application.add_handler(CommandHandler("kurs", with_cooldown(kurs_default)))
-    application.add_handler(CommandHandler("kursidr", with_cooldown(kurs_idr)))
-    application.add_handler(CommandHandler("kurswon", with_cooldown(kurs_won)))
-    application.add_handler(CommandHandler("mute", with_cooldown(cmd_mute)))
-    application.add_handler(CommandHandler("ban", with_cooldown(cmd_ban)))
-    application.add_handler(CommandHandler("unban", with_cooldown(cmd_unban)))
-    application.add_handler(CommandHandler("restrike", with_cooldown(cmd_restrike)))
-    application.add_handler(CommandHandler("unmute", with_cooldown(cmd_unmute)))
-    application.add_handler(CommandHandler("adminlist", with_cooldown(lihat_admin)))
-    application.add_handler(CommandHandler("rules", with_cooldown(show_rules)))
-    application.add_handler(CommandHandler("cekstrike", cmd_cekstrike))
-    application.add_handler(CommandHandler("resetstrikeall", cmd_resetstrikeall))
-    application.add_handler(CommandHandler("resetbanall", cmd_resetbanall))
-    application.add_handler(CommandHandler("tambahkata", cmd_tambahkata))
-
-    application.add_handler(
-        MessageHandler(
-            filters.StatusUpdate.NEW_CHAT_MEMBERS, welcome.welcome_new_member
-        )
-    )
-
-    # application.add_handler(CallbackQueryHandler(agree_button, pattern="^agree_rules$"))
-    application.add_handler(
-        MessageHandler(
-            filters.TEXT & (filters.REPLY | filters.Entity("mention")), simple_responder
-        )
-    )
-
-    application.add_handler(
-        MessageHandler(filters.TEXT & filters.ChatType.GROUPS, moderasi)
-    )
+    # === Register Handlers ===
+    register_handlers(application)
 
     # === Pesan saat startup ===
     # async def startup_notify(app):
