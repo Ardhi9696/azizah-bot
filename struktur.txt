@@ -1,29 +1,66 @@
-.
+azizah-bot
+├── .DS_Store
+├── .env
+├── .gitattributes
+├── .gitignore
+├── README.md
 ├── bot.py
-├── cache_eps.json
-├── cache_pengumuman.json
-├── error.log
-├── get_info.json
-├── get_prelim.json
+├── data
+│   ├── blacklist.json
+│   ├── cache_eps.json
+│   ├── cache_jadwal_eps.json
+│   ├── cache_pendaftaran.json
+│   ├── cache_pengumuman.json
+│   ├── cache_phishing_links.json
+│   ├── cache_tahap1.json
+│   ├── cache_tahap2.json
+│   ├── cache_tahap_final.json
+│   ├── cache_training.json
+│   ├── get_info.json
+│   ├── get_prelim.json
+│   ├── link.json
+│   ├── moderation_keywords.json
+│   ├── progress_eps.json
+│   ├── respon.json
+│   ├── topik_ids.json
+│   └── whitelist.json
 ├── handlers
-│   ├── __init__.py
-│   ├── cek_eps.py
-│   ├── get_info.py
-│   ├── get_jadwal.py
-│   ├── get_pass1.py
-│   ├── get_pass2.py
-│   ├── get_prelim.py
-│   ├── get_reg.py
-│   ├── help.py
-│   ├── responder.py
-│   ├── start.py
-│   └── welcome.py
-├── log.txt
+│   ├── __init__.py
+│   ├── cek_eps.py
+│   ├── command_wrapper.py
+│   ├── get_eps.py
+│   ├── get_info.py
+│   ├── get_jadwal.py
+│   ├── get_kurs.py
+│   ├── get_link.py
+│   ├── get_pass1.py
+│   ├── get_pass2.py
+│   ├── get_prelim.py
+│   ├── get_reg.py
+│   ├── help.py
+│   ├── moderasi.py
+│   ├── register_handlers.py
+│   ├── responder.py
+│   ├── rules.py
+│   ├── tanya_meta.py
+│   └── welcome.py
+├── logs
+│   ├── error.log
+│   ├── log.txt
+│   ├── log.txt.2025-07-02
+│   ├── log.txt.2025-07-03
+│   ├── log.txt.2025-07-04
+│   ├── log.txt.2025-07-05
+│   └── moderasi.log
 ├── requirements.txt
-├── respon.json
 ├── run.py
+├── start.bat
+├── start.command
+├── start.sh
 ├── struktur.txt
 └── utils
+    ├── __init__.py
+    ├── anti_phishing.py
+    ├── constants.py
     ├── monitor_utils.py
-
-3 directories, 42 files
+    └── topic_guard.py
