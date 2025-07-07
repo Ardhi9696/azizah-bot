@@ -142,5 +142,29 @@
     "lulus_min": "92.5",
     "status": "",
     "masa": "~"
+  },
+  "0122017P10021447": {
+    "nama": "INDRA SAPTADI SUTIONO",
+    "negara": "INDONESIA",
+    "bidang": "Manufacturing",
+    "tanggal": "20170402",
+    "mendengar": "46",
+    "bacaan": "50",
+    "total": "96",
+    "lulus_min": "72",
+    "status": "",
+    "masa": "~"
+  },
+  "0122025C90420531": {
+    "nama": "INDRA SAPTADI SUTIONO",
+    "negara": "INDONESIA",
+    "bidang": "Manufacturing",
+    "tanggal": "20250412",
+    "mendengar": "90",
+    "bacaan": "100",
+    "total": "190",
+    "lulus_min": "150",
+    "status": "Y",
+    "masa": "20250604~20270603"
   }
 }
