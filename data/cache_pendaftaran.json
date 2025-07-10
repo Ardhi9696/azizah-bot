@@ -2,6 +2,22 @@
   "pendaftaran": [
     {
       "type": "CBT",
+      "title": "The 11st recruitment of the point system in Indonesia(Manufacturing)_Jakarta(2)",
+      "nation": "Indonesia",
+      "period": "2025-06-02 ~ 2025-06-04",
+      "test_date": "2025-07-25 ~ ..",
+      "result_date": "2025-10-21"
+    },
+    {
+      "type": "CBT",
+      "title": "The 11st recruitment of the point system in Indonesia(Manufacturing)_Smarang(2)",
+      "nation": "Indonesia",
+      "period": "2025-06-02 ~ 2025-06-04",
+      "test_date": "2025-07-25 ~ ..",
+      "result_date": "2025-10-21"
+    },
+    {
+      "type": "CBT",
       "title": "Virtual Test(Point System) in Tajikistan",
       "nation": "Tajikistan",
       "period": "Undecided",
@@ -37,16 +53,16 @@
       "title": "The 11st recruitment of the point system in Indonesia(Manufacturing)_Smarang",
       "nation": "Indonesia",
       "period": "2025-06-02 ~ 2025-06-04",
-      "test_date": "Undecided",
-      "result_date": "Undecided"
+      "test_date": "2025-07-25 ~ ..",
+      "result_date": "2025-10-21"
     },
     {
       "type": "CBT",
       "title": "The 11st recruitment of the point system in Indonesia(Manufacturing)_Jakarta",
       "nation": "Indonesia",
       "period": "2025-06-02 ~ 2025-06-04",
-      "test_date": "Undecided",
-      "result_date": "Undecided"
+      "test_date": "2025-07-25 ~ ..",
+      "result_date": "2025-10-21"
     },
     {
       "type": "CBT",
@@ -63,22 +79,6 @@
       "period": "2025-04-09 ~ 2025-04-11",
       "test_date": "2025-05-23 ~ ..",
       "result_date": "2025-06-24"
-    },
-    {
-      "type": "CBT",
-      "title": "The 10th recruitment of the point system in Indonesia(Fishery)_Jakarta(2)",
-      "nation": "Indonesia",
-      "period": "2025-04-09 ~ 2025-04-11",
-      "test_date": "2025-05-23 ~ ..",
-      "result_date": "2025-06-24"
-    },
-    {
-      "type": "PBT",
-      "title": "2025 Skilled Workers Specialized in Root Industry Occupation in Tajikistan(2nd)_Welding",
-      "nation": "Tajikistan",
-      "period": "2025-03-10 ~ 2025-03-14",
-      "test_date": "2025-05-29 ~ ..",
-      "result_date": "2025-06-13"
     }
   ]
 }

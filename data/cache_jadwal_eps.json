@@ -1,6 +1,18 @@
 {
   "jadwal": [
     {
+      "nation": "East Timor",
+      "title": "The 8th recruitment of the point system in East Timor[Fishery]",
+      "type": "General (CBT)",
+      "announcement_date": "2025-07-07"
+    },
+    {
+      "nation": "East Timor",
+      "title": "The 8th recruitment of the point system in East Timor[Manufacturing]",
+      "type": "General (CBT)",
+      "announcement_date": "2025-07-07"
+    },
+    {
       "nation": "Nepal",
       "title": "2025 Special EPS-TOPIK in Nepal(2)",
       "type": "Special (CBT)",
@@ -45,18 +57,6 @@
     {
       "nation": "Indonesia",
       "title": "The 10th recruitment of the point system in Indonesia(Fishery)_Jakarta(2)",
-      "type": "General (CBT)",
-      "announcement_date": "2025-05-16"
-    },
-    {
-      "nation": "Indonesia",
-      "title": "The 10th recruitment of the point system in Indonesia(Fishery)_Jakarta",
-      "type": "General (CBT)",
-      "announcement_date": "2025-05-16"
-    },
-    {
-      "nation": "Indonesia",
-      "title": "The 10th recruitment of the point system in Indonesia(Fishery)_Smarang",
       "type": "General (CBT)",
       "announcement_date": "2025-05-16"
     }
