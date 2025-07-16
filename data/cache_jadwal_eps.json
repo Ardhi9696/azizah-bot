@@ -1,6 +1,12 @@
 {
   "jadwal": [
     {
+      "nation": "Tajikistan",
+      "title": "Virtual Test(Point System) in Tajikistan",
+      "type": "General (CBT)",
+      "announcement_date": "Undecided"
+    },
+    {
       "nation": "East Timor",
       "title": "The 8th recruitment of the point system in East Timor[Fishery]",
       "type": "General (CBT)",
@@ -51,12 +57,6 @@
     {
       "nation": "Indonesia",
       "title": "The 10th recruitment of the point system in Indonesia(Fishery)_Smarang(2)",
-      "type": "General (CBT)",
-      "announcement_date": "2025-05-16"
-    },
-    {
-      "nation": "Indonesia",
-      "title": "The 10th recruitment of the point system in Indonesia(Fishery)_Jakarta(2)",
       "type": "General (CBT)",
       "announcement_date": "2025-05-16"
     }
