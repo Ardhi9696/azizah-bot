@@ -79,6 +79,7 @@ def akses_progress(driver):
     )
     soup = BeautifulSoup(driver.page_source, "html.parser")
 
+<<<<<<< HEAD
     nama = soup.select_one("table.tbl_typeA.center td:nth-child(2)")
     nama = nama.get_text(strip=True) if nama else "-"
 
@@ -104,6 +105,105 @@ def akses_progress(driver):
             "tanggal_kirim": data_kirim[1],
             "tanggal_terima": data_kirim[2],
         },
+=======
+    # 1) Nama: tetap dari tabel center
+    nama_el = soup.select_one("table.tbl_typeA.center td:nth-child(2)")
+    nama = nama_el.get_text(strip=True) if nama_el else "-"
+
+    # 2) Tabel purple #1: Daftar Pengiriman/Penerimaan (bisa multi-row)
+    purple_tables = soup.select("table.tbl_typeA.purple.mt30")
+    pengiriman_list = []
+    if purple_tables:
+        t1 = purple_tables[0]
+        for tr in t1.select("tbody tr"):
+            tds = tr.select("td")
+            if len(tds) < 3:
+                continue
+            no_text = tds[0].get_text(strip=True)
+            # Ekstrak id (jika ada) dari onclick link a[href^="javascript:fncDetailRow("]
+            a_tag = tds[0].select_one('a[href^="javascript:fncDetailRow("]')
+            ref_id = None
+            if a_tag and "fncDetailRow" in (a_tag.get("href") or ""):
+                # contoh: javascript:fncDetailRow('ID02024005432', '');
+                m = re.search(r"fncDetailRow\('([^']+)'", a_tag["href"])
+                if m:
+                    ref_id = m.group(1)
+
+            tanggal_kirim = tds[1].get_text(" ", strip=True)
+
+            # Kolom penerimaan berpotensi mengandung 'Masa Berlaku' di baris baru
+            penerimaan_raw = tds[2].get_text("\n", strip=True)
+            # Pecah jadi tanggal penerimaan + masa berlaku (jika ada rentang)
+            tanggal_terima = "-"
+            masa_berlaku = None
+
+            # Ambil tanggal penerimaan (YYYY-MM-DD pertama pada kolom)
+            m_date = re.search(r"\d{4}-\d{2}-\d{2}", penerimaan_raw)
+            if m_date:
+                tanggal_terima = m_date.group(0)
+
+            # Ambil rentang masa berlaku
+            m_masa = re.search(r"(\d{4}-\d{2}-\d{2}~\d{4}-\d{2}-\d{2})", penerimaan_raw)
+            if m_masa:
+                masa_berlaku = m_masa.group(1)
+
+            pengiriman_list.append(
+                {
+                    "no": no_text,
+                    "ref_id": ref_id,
+                    "tanggal_kirim": tanggal_kirim,
+                    "tanggal_terima": tanggal_terima,
+                    "masa_berlaku": masa_berlaku,
+                    "raw": penerimaan_raw,  # simpan mentah untuk debugging/perbandingan cache
+                }
+            )
+
+    # Tentukan latest (NO terbesar jika numerik, else gunakan baris terakhir)
+    pengiriman_latest = None
+    if pengiriman_list:
+        try:
+            pengiriman_latest = max(
+                pengiriman_list,
+                key=lambda r: int(re.sub(r"\D", "", r.get("no", "") or "0") or 0),
+            )
+        except Exception:
+            pengiriman_latest = pengiriman_list[-1]
+
+    # 3) Tabel purple #2: Prosedur/Perkembangan/Tanggal (riwayat)
+    riwayat = []
+    if len(purple_tables) >= 2:
+        t2 = purple_tables[1]
+        for row in t2.select("tbody tr"):
+            cols = row.select("td")
+            if len(cols) >= 3:
+                prosedur = cols[0].get_text(strip=True)
+                status = cols[1].get_text(" ", strip=True)
+                tanggal = cols[2].get_text(" ", strip=True)
+                riwayat.append((prosedur, status, tanggal))
+
+    return {
+        "nama": nama,
+        # kompatibilitas lama: sediakan field lama bila dibutuhkan di tempat lain
+        "pengiriman": (  # keep old shape; gunakan pengiriman_latest
+            {
+                "no": pengiriman_latest.get("no") if pengiriman_latest else "-",
+                "tanggal_kirim": (pengiriman_latest or {}).get("tanggal_kirim", "-"),
+                "tanggal_terima": (
+                    # isi tanggal + label masa berlaku bila ada, mirip format lama
+                    ((pengiriman_latest or {}).get("tanggal_terima", "-") or "-")
+                    + (
+                        f"  Masa Berlaku: {(pengiriman_latest or {}).get('masa_berlaku')}"
+                        if (pengiriman_latest or {}).get("masa_berlaku")
+                        else ""
+                    )
+                ),
+            }
+            if pengiriman_latest
+            else {"no": "-", "tanggal_kirim": "-", "tanggal_terima": "-"}
+        ),
+        # bentuk baru yang lengkap
+        "pengiriman_list": pengiriman_list,
+>>>>>>> 31c47af (Perubahan cek eps)
         "riwayat": riwayat,
     }
 
@@ -113,6 +213,11 @@ def format_data(data: dict) -> str:
         "Ujian Bahasa Korea": "📝",
         "Pengiriman": "📮",
         "Penerimaan": "📥",
+<<<<<<< HEAD
+=======
+        "Tanggal Pengiriman Daftar Pencari Kerja": "📮",
+        "Tanggal Penerimaan Daftar Pencari Kerja": "📥",
+>>>>>>> 31c47af (Perubahan cek eps)
         "Keadaan pencarian pekerjaan": "🏢",
         "Pengeluaran Izin Kerja": "📄",
         "Pengiriman SLC": "📤",
@@ -138,6 +243,7 @@ def format_data(data: dict) -> str:
     lines = []
     lines.append("<b>📋 Hasil Kemajuan EPS</b>\n")
 
+<<<<<<< HEAD
     lines.append(f"<b>👤 Nama:</b> {data['nama']}")
     lines.append(f"<b>📮 Pengiriman:</b> {data['pengiriman']['tanggal_kirim']}")
     lines.append(
@@ -158,6 +264,49 @@ def format_data(data: dict) -> str:
     lines.append("\n<b>🧾 Progres Kemajuan Imigrasi:</b>")
 
     for idx, (prosedur, status, tanggal) in enumerate(data["riwayat"], 1):
+=======
+    # Header umum
+    lines.append(f"<b>👤 Nama:</b> {data.get('nama', '-')}")
+    pengiriman_latest = data.get("pengiriman", {})
+    t_kirim = pengiriman_latest.get("tanggal_kirim", "-")
+    t_terima_raw = pengiriman_latest.get("tanggal_terima", "-")
+
+    # Ambil masa berlaku dari raw/teks penerimaan
+    masa = None
+    m = re.findall(r"(\d{4}-\d{2}-\d{2}~\d{4}-\d{2}-\d{2})", t_terima_raw)
+    if m:
+        masa = m[0]
+
+    # Ambil tanggal_terima (YYYY-MM-DD pertama) untuk tampilan ringkas
+    t_terima = "-"
+    m2 = re.search(r"\d{4}-\d{2}-\d{2}", t_terima_raw or "")
+    if m2:
+        t_terima = m2.group(0)
+
+    lines.append(f"<b>📮 Pengiriman (terbaru):</b> {t_kirim}")
+    lines.append(f"<b>✅ Penerimaan (terbaru):</b> {t_terima}")
+
+    if masa:
+        lines.append(f"<b>📆 Masa Aktif :</b> {masa}")
+
+    # Riwayat pengiriman/penerimaan (jika ada multi-row)
+    pengiriman_list = data.get("pengiriman_list") or []
+    if pengiriman_list:
+        lines.append("\n<b>🗂️ Riwayat Pengiriman/Penerimaan:</b>")
+        for r in pengiriman_list:
+            no = r.get("no", "-")
+            kirim = r.get("tanggal_kirim", "-")
+            terima = r.get("tanggal_terima", "-")
+            masa_r = r.get("masa_berlaku")
+            masa_txt = f"  |  Masa: {masa_r}" if masa_r else ""
+            lines.append(
+                f"• <b>#{no}</b> Kirim: {kirim}  |  Terima: {terima}{masa_txt}"
+            )
+
+    # Riwayat prosedur
+    lines.append("\n<b>🧾 Progres Kemajuan Imigrasi:</b>")
+    for idx, (prosedur, status, tanggal) in enumerate(data.get("riwayat", []), 1):
+>>>>>>> 31c47af (Perubahan cek eps)
         prosedur = prosedur.strip()
         emoji = emoji_map.get(prosedur.strip(), "🔹")
 
@@ -166,8 +315,14 @@ def format_data(data: dict) -> str:
             r"\b(URL|IMG2?|ROAD VIEW)\b", "", status, flags=re.IGNORECASE
         )
         status_bersih = re.sub(r"\s{2,}", " ", status_bersih).strip()
+<<<<<<< HEAD
         # Buang kurung jika tanggal kosong, hanya strip, atau "-" saja
         tanggal_str = f" ({tanggal})" if tanggal.strip() not in ["", "-"] else ""
+=======
+        tanggal_str = (
+            f" ({tanggal})" if (tanggal or "-").strip() not in ["", "-"] else ""
+        )
+>>>>>>> 31c47af (Perubahan cek eps)
 
         lines.append(
             f"\n<b>{idx:02d}. {emoji} {prosedur}</b> — {status_bersih}{tanggal_str}"
