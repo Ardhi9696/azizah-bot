@@ -42,7 +42,7 @@ def parse_judul_link(html_string):
     href = a.get("href", "").strip().replace("\\/", "/")
 
     if href.startswith("/"):
-        href = f"https://bp2mi.go.id{href}"
+        href = f"https://www.kp2mi.go.id{href}"
 
     logger.info(f"📌 Judul hasil parsing: {teks}")
     logger.info(f"🔗 Link hasil parsing: {href or '-'}")

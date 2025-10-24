@@ -1,64 +1,64 @@
 {
   "tahap1": [
     {
-      "nation": "Indonesia",
-      "title": "Indonesia the 5th Test of proficiency in Korean(General)  Announcement",
+      "nation": "Philippines",
+      "title": "Philippines the 3th Test of proficiency in Korean(General)  Announcement",
       "type": "General (CBT)",
-      "date": "2025-06-24"
+      "date": "2025-10-14"
     },
     {
       "nation": "Indonesia",
-      "title": "Indonesia the 4th Test of proficiency in Korean(General)  Announcement",
+      "title": "Indonesia the 9th Test of proficiency in Korean(General)  Announcement",
       "type": "General (CBT)",
-      "date": "2025-06-24"
+      "date": "2025-10-14"
     },
     {
       "nation": "Indonesia",
-      "title": "Indonesia the 3th Test of proficiency in Korean(General)  Announcement",
+      "title": "Indonesia the 8th Test of proficiency in Korean(General)  Announcement",
       "type": "General (CBT)",
-      "date": "2025-06-24"
+      "date": "2025-10-14"
     },
     {
       "nation": "Indonesia",
-      "title": "Indonesia the 2th Test of proficiency in Korean(General)  Announcement",
+      "title": "Indonesia the 7th Test of proficiency in Korean(General)  Announcement",
       "type": "General (CBT)",
-      "date": "2025-06-24"
+      "date": "2025-10-14"
     },
     {
-      "nation": "Laos",
-      "title": "Laos the 1th Test of proficiency in Korean(General)  Announcement",
+      "nation": "Indonesia",
+      "title": "Indonesia the 6th Test of proficiency in Korean(General)  Announcement",
       "type": "General (CBT)",
-      "date": "2025-06-02"
+      "date": "2025-10-14"
+    },
+    {
+      "nation": "Mongolia",
+      "title": "Mongolia the 5th Test of proficiency in Korean(General)  Announcement",
+      "type": "General (CBT)",
+      "date": "2025-09-30"
+    },
+    {
+      "nation": "Mongolia",
+      "title": "Mongolia the 4th Test of proficiency in Korean(General)  Announcement",
+      "type": "General (CBT)",
+      "date": "2025-09-30"
+    },
+    {
+      "nation": "Mongolia",
+      "title": "Mongolia the 3th Test of proficiency in Korean(General)  Announcement",
+      "type": "General (CBT)",
+      "date": "2025-09-30"
     },
     {
       "nation": "Thailand",
-      "title": "Thailand the 1th Test of proficiency in Korean(General)  Announcement",
+      "title": "Thailand the 2th Test of proficiency in Korean(General)  Announcement",
       "type": "General (CBT)",
-      "date": "2025-05-13"
+      "date": "2025-09-24"
     },
     {
-      "nation": "China",
-      "title": "China the 1th Test of proficiency in Korean(General)  Announcement",
+      "nation": "Pakistan",
+      "title": "Pakistan the 2th Test of proficiency in Korean(General)  Announcement",
       "type": "General (CBT)",
-      "date": "2025-04-24"
-    },
-    {
-      "nation": "Mongolia",
-      "title": "Mongolia the 1th Test of proficiency in Korean(General)  Announcement",
-      "type": "General (CBT)",
-      "date": "2025-04-10"
-    },
-    {
-      "nation": "Mongolia",
-      "title": "Mongolia the 2th Test of proficiency in Korean(General)  Announcement",
-      "type": "General (CBT)",
-      "date": "2025-04-10"
-    },
-    {
-      "nation": "Philippines",
-      "title": "Philippines the 1th Test of proficiency in Korean(General)  Announcement",
-      "type": "General (CBT)",
-      "date": "2025-04-04"
+      "date": "2025-08-27"
     }
   ]
 }

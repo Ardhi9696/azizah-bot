@@ -138,7 +138,7 @@ async def monitor_job(context: ContextTypes.DEFAULT_TYPE):
 
     # === Monitoring Pengumuman ===
     pengumuman_baru = check_api_multi(
-        "https://bp2mi.go.id/gtog-data/korea/Pengumuman?start=0&length=10",
+        "https://www.kp2mi.go.id/gtog-data/korea/Pengumuman?start=0&length=10",
         MONITOR_INFO,
         "pengumuman",
     )
@@ -158,7 +158,7 @@ async def monitor_job(context: ContextTypes.DEFAULT_TYPE):
 
     # === Monitoring Preliminary Training ===
     training_baru = check_api_multi(
-        "https://bp2mi.go.id/gtog-data/korea/Preliminary%20Training%20dan%20Info?start=0&length=10",
+        "https://www.kp2mi.go.id/gtog-data/korea/Preliminary%20Training%20dan%20Info?start=0&length=10",
         MONITOR_PRELIM,
         "training",
     )

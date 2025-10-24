@@ -1,64 +1,64 @@
 {
   "final": [
     {
+      "nation": "Indonesia",
+      "title": "Indonesia the 10th Test of proficiency in Korean(General)  Announcement",
+      "type": "General (CBT)",
+      "date": "2025-10-20"
+    },
+    {
+      "nation": "Kyrgyzstan",
+      "title": "Kyrgyzstan the 2th Test of proficiency in Korean(Special)  Announcement",
+      "type": "Special (CBT)",
+      "date": "2025-10-13"
+    },
+    {
+      "nation": "Pakistan",
+      "title": "Pakistan the 2th POINT_EXAM Announcement",
+      "type": "General (CBT)",
+      "date": "2025-10-15"
+    },
+    {
+      "nation": "Pakistan",
+      "title": "Pakistan the 1th POINT_EXAM Announcement",
+      "type": "General (CBT)",
+      "date": "2025-10-15"
+    },
+    {
+      "nation": "Tajikistan",
+      "title": "Tajikistan the 3th POINT_EXAM Announcement",
+      "type": "General (CBT)",
+      "date": "2025-09-10"
+    },
+    {
+      "nation": "Indonesia",
+      "title": "Indonesia the 5th POINT_EXAM Announcement",
+      "type": "General (CBT)",
+      "date": "2025-08-01"
+    },
+    {
+      "nation": "Indonesia",
+      "title": "Indonesia the 4th POINT_EXAM Announcement",
+      "type": "General (CBT)",
+      "date": "2025-08-01"
+    },
+    {
+      "nation": "Indonesia",
+      "title": "Indonesia the 3th POINT_EXAM Announcement",
+      "type": "General (CBT)",
+      "date": "2025-08-01"
+    },
+    {
+      "nation": "Indonesia",
+      "title": "Indonesia the 2th POINT_EXAM Announcement",
+      "type": "General (CBT)",
+      "date": "2025-08-01"
+    },
+    {
       "nation": "Nepal",
       "title": "Nepal the 2th Test of proficiency in Korean(Special)  Announcement",
       "type": "Special (CBT)",
       "date": "2025-06-13"
-    },
-    {
-      "nation": "Tajikistan",
-      "title": "Tajikistan the 2th Test of proficiency in Korean(General)  Announcement",
-      "type": "General (PBT)",
-      "date": "2025-06-13"
-    },
-    {
-      "nation": "Tajikistan",
-      "title": "Tajikistan the 1th Test of proficiency in Korean(General)  Announcement",
-      "type": "General (PBT)",
-      "date": "2025-06-13"
-    },
-    {
-      "nation": "Nepal",
-      "title": "Nepal the 1th Test of proficiency in Korean(Special)  Announcement",
-      "type": "Special (CBT)",
-      "date": "2025-06-13"
-    },
-    {
-      "nation": "Kyrgyzstan",
-      "title": "Kyrgyzstan the 1th Test of proficiency in Korean(Special)  Announcement",
-      "type": "Special (CBT)",
-      "date": "2025-06-06"
-    },
-    {
-      "nation": "Philippines",
-      "title": "Philippines the 2th Test of proficiency in Korean(Special)  Announcement",
-      "type": "Special (CBT)",
-      "date": "2025-06-04"
-    },
-    {
-      "nation": "Indonesia",
-      "title": "Indonesia the 2th Test of proficiency in Korean(Special)  Announcement",
-      "type": "Special (CBT)",
-      "date": "2025-06-04"
-    },
-    {
-      "nation": "Indonesia",
-      "title": "Indonesia the 1th Test of proficiency in Korean(Special)  Announcement",
-      "type": "Special (CBT)",
-      "date": "2025-06-04"
-    },
-    {
-      "nation": "Bangladesh",
-      "title": "Bangladesh the 2th Test of proficiency in Korean(General)  Announcement",
-      "type": "General (CBT)",
-      "date": "2025-06-02"
-    },
-    {
-      "nation": "Bangladesh",
-      "title": "Bangladesh the 1th Test of proficiency in Korean(General)  Announcement",
-      "type": "General (CBT)",
-      "date": "2025-06-02"
     }
   ]
 }

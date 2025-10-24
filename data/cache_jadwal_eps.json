@@ -1,64 +1,52 @@
 {
   "jadwal": [
     {
-      "nation": "Tajikistan",
-      "title": "Virtual Test(Point System) in Tajikistan",
+      "nation": "Cambodia",
+      "title": "2025 Skilled Workers Specialized in Root Industry Occupation in Cambodia(1st)_Welding",
       "type": "General (CBT)",
       "announcement_date": "Undecided"
     },
     {
-      "nation": "East Timor",
-      "title": "The 8th recruitment of the point system in East Timor[Fishery]",
+      "nation": "Indonesia",
+      "title": "2025 Skilled Workers Specialized in Root Industry Occupation in Indonesia(2nd)_Welding",
       "type": "General (CBT)",
-      "announcement_date": "2025-07-07"
-    },
-    {
-      "nation": "East Timor",
-      "title": "The 8th recruitment of the point system in East Timor[Manufacturing]",
-      "type": "General (CBT)",
-      "announcement_date": "2025-07-07"
-    },
-    {
-      "nation": "Nepal",
-      "title": "2025 Special EPS-TOPIK in Nepal(2)",
-      "type": "Special (CBT)",
-      "announcement_date": "2025-06-03"
-    },
-    {
-      "nation": "Philippines",
-      "title": "2025 Special EPS-TOPIK in Philippines(1)",
-      "type": "Special (CBT)",
-      "announcement_date": "2025-05-27"
-    },
-    {
-      "nation": "Nepal",
-      "title": "2025 Special EPS-TOPIK in Nepal",
-      "type": "Special (CBT)",
-      "announcement_date": "2025-05-26"
-    },
-    {
-      "nation": "Tajikistan",
-      "title": "2025 Skilled Workers Specialized in Root Industry Occupation in Tajikistan(2nd)_Welding",
-      "type": "General (PBT)",
-      "announcement_date": "2025-05-23"
-    },
-    {
-      "nation": "Tajikistan",
-      "title": "2025 Skilled Workers Specialized in Root Industry Occupation in Tajikistan(1st)_Welding",
-      "type": "General (PBT)",
-      "announcement_date": "2025-05-23"
-    },
-    {
-      "nation": "Kyrgyzstan",
-      "title": "2025 Special EPS-TOPIK in Kyrgyzstan",
-      "type": "Special (CBT)",
-      "announcement_date": "2025-05-22"
+      "announcement_date": "2025-10-16"
     },
     {
       "nation": "Indonesia",
-      "title": "The 10th recruitment of the point system in Indonesia(Fishery)_Smarang(2)",
+      "title": "2025 Skilled Workers Specialized in Root Industry Occupation in Indonesia(1st)_Welding",
       "type": "General (CBT)",
-      "announcement_date": "2025-05-16"
+      "announcement_date": "2025-10-16"
+    },
+    {
+      "nation": "Myanmar",
+      "title": "2025 Special EPS-TOPIK in Myanmar",
+      "type": "Special (CBT)",
+      "announcement_date": "2025-10-13"
+    },
+    {
+      "nation": "Thailand",
+      "title": "태국 UBT 테스트",
+      "type": "General (CBT)",
+      "announcement_date": "Undecided"
+    },
+    {
+      "nation": "Thailand",
+      "title": "The 15th(15-2) recruitment of the Point system in Thailand",
+      "type": "General (CBT)",
+      "announcement_date": "2025-09-24"
+    },
+    {
+      "nation": "Nepal",
+      "title": "2025 Skilled Workers Specialized in Root Industry Occupation in Nepal(1st)_Welding",
+      "type": "General (CBT)",
+      "announcement_date": "2025-09-22"
+    },
+    {
+      "nation": "Philippines",
+      "title": "The 10th recruitment of the point system in the Philippines",
+      "type": "General (CBT)",
+      "announcement_date": "2025-09-19"
     }
   ]
 }

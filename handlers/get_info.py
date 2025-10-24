@@ -12,7 +12,7 @@ from utils.topic_guard import handle_thread_guard
 
 logger = logging.getLogger(__name__)
 
-API_URL = "https://bp2mi.go.id/gtog-data/korea/Pengumuman?draw=1&start=0&length=10"
+API_URL = "https://www.kp2mi.go.id/gtog-data/korea/Pengumuman?draw=1&start=0&length=10"
 CACHE_FILE = PENGUMUMAN_FILE
 
 
@@ -30,7 +30,7 @@ def parse_judul_link(html_string):
     teks = a.get_text(strip=True)
     href = a["href"].replace("\\/", "/").strip()
     if href.startswith("/"):
-        href = f"https://bp2mi.go.id{href}"
+        href = f"https://www.kp2mi.go.id{href}"
     return teks, href
 
 
