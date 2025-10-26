@@ -79,33 +79,6 @@ def akses_progress(driver):
     )
     soup = BeautifulSoup(driver.page_source, "html.parser")
 
-<<<<<<< HEAD
-    nama = soup.select_one("table.tbl_typeA.center td:nth-child(2)")
-    nama = nama.get_text(strip=True) if nama else "-"
-
-    tabel1 = soup.select("table.tbl_typeA.purple")[0]
-    rows1 = tabel1.select("tbody tr")
-    data_kirim = [td.get_text(" ", strip=True) for td in rows1[0].select("td")]
-
-    tabel2 = soup.select("table.tbl_typeA.purple")[1]
-    rows2 = tabel2.select("tbody tr")
-    riwayat = []
-    for row in rows2:
-        kolom = row.select("td")
-        if len(kolom) >= 3:
-            prosedur = kolom[0].get_text(strip=True)
-            status = kolom[1].get_text(" ", strip=True)
-            tanggal = kolom[2].get_text(" ", strip=True)
-            riwayat.append((prosedur, status, tanggal))
-
-    return {
-        "nama": nama,
-        "pengiriman": {
-            "no": data_kirim[0],
-            "tanggal_kirim": data_kirim[1],
-            "tanggal_terima": data_kirim[2],
-        },
-=======
     # 1) Nama: tetap dari tabel center
     nama_el = soup.select_one("table.tbl_typeA.center td:nth-child(2)")
     nama = nama_el.get_text(strip=True) if nama_el else "-"
@@ -203,7 +176,6 @@ def akses_progress(driver):
         ),
         # bentuk baru yang lengkap
         "pengiriman_list": pengiriman_list,
->>>>>>> 31c47af (Perubahan cek eps)
         "riwayat": riwayat,
     }
 
@@ -213,11 +185,8 @@ def format_data(data: dict) -> str:
         "Ujian Bahasa Korea": "📝",
         "Pengiriman": "📮",
         "Penerimaan": "📥",
-<<<<<<< HEAD
-=======
         "Tanggal Pengiriman Daftar Pencari Kerja": "📮",
         "Tanggal Penerimaan Daftar Pencari Kerja": "📥",
->>>>>>> 31c47af (Perubahan cek eps)
         "Keadaan pencarian pekerjaan": "🏢",
         "Pengeluaran Izin Kerja": "📄",
         "Pengiriman SLC": "📤",
@@ -243,28 +212,6 @@ def format_data(data: dict) -> str:
     lines = []
     lines.append("<b>📋 Hasil Kemajuan EPS</b>\n")
 
-<<<<<<< HEAD
-    lines.append(f"<b>👤 Nama:</b> {data['nama']}")
-    lines.append(f"<b>📮 Pengiriman:</b> {data['pengiriman']['tanggal_kirim']}")
-    lines.append(
-        f"<b>✅ Penerimaan:</b>{data['pengiriman']['tanggal_terima'].split()[0]}"
-    )
-
-    if (
-        "Masa Berlaku" in data["pengiriman"]["tanggal_terima"]
-        or "유효기간" in data["pengiriman"]["tanggal_terima"]
-    ):
-        masa = re.findall(
-            r"(\d{4}-\d{2}-\d{2}~\d{4}-\d{2}-\d{2})",
-            data["pengiriman"]["tanggal_terima"],
-        )
-        if masa:
-            lines.append(f"<b>📆 Masa Aktif :</b> {masa[0]}")
-
-    lines.append("\n<b>🧾 Progres Kemajuan Imigrasi:</b>")
-
-    for idx, (prosedur, status, tanggal) in enumerate(data["riwayat"], 1):
-=======
     # Header umum
     lines.append(f"<b>👤 Nama:</b> {data.get('nama', '-')}")
     pengiriman_latest = data.get("pengiriman", {})
@@ -306,7 +253,6 @@ def format_data(data: dict) -> str:
     # Riwayat prosedur
     lines.append("\n<b>🧾 Progres Kemajuan Imigrasi:</b>")
     for idx, (prosedur, status, tanggal) in enumerate(data.get("riwayat", []), 1):
->>>>>>> 31c47af (Perubahan cek eps)
         prosedur = prosedur.strip()
         emoji = emoji_map.get(prosedur.strip(), "🔹")
 
@@ -315,14 +261,9 @@ def format_data(data: dict) -> str:
             r"\b(URL|IMG2?|ROAD VIEW)\b", "", status, flags=re.IGNORECASE
         )
         status_bersih = re.sub(r"\s{2,}", " ", status_bersih).strip()
-<<<<<<< HEAD
-        # Buang kurung jika tanggal kosong, hanya strip, atau "-" saja
-        tanggal_str = f" ({tanggal})" if tanggal.strip() not in ["", "-"] else ""
-=======
         tanggal_str = (
             f" ({tanggal})" if (tanggal or "-").strip() not in ["", "-"] else ""
         )
->>>>>>> 31c47af (Perubahan cek eps)
 
         lines.append(
             f"\n<b>{idx:02d}. {emoji} {prosedur}</b> — {status_bersih}{tanggal_str}"
