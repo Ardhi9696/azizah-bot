@@ -1,10 +1,28 @@
 {
   "nama": "SHOLIHIN ARDHI IMRON",
   "pengiriman": {
-    "no": "1",
-    "tanggal_kirim": "2024-08-13",
-    "tanggal_terima": "2024-09-30 * Masa Berlaku : 2024-09-30~2025-09-29"
+    "no": "2",
+    "tanggal_kirim": "2025-10-02",
+    "tanggal_terima": "-"
   },
+  "pengiriman_list": [
+    {
+      "no": "1",
+      "ref_id": "ID02024005432",
+      "tanggal_kirim": "2024-08-13",
+      "tanggal_terima": "2024-09-30",
+      "masa_berlaku": "2024-09-30~2025-09-29",
+      "raw": "2024-09-30\n*\nMasa Berlaku\n:\n2024-09-30~2025-09-29"
+    },
+    {
+      "no": "2",
+      "ref_id": "ID02025008008",
+      "tanggal_kirim": "2025-10-02",
+      "tanggal_terima": "-",
+      "masa_berlaku": null,
+      "raw": "-"
+    }
+  ],
   "riwayat": [
     [
       "Ujian Bahasa Korea",
