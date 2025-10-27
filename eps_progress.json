@@ -1,0 +1,90 @@
+{
+  "nama": "SHOLIHIN ARDHI IMRON",
+  "aktif_ref_id": "ID02025008008",
+  "pengiriman": {
+    "no": "2",
+    "ref_id": "ID02025008008",
+    "tanggal_kirim": "2025-10-02",
+    "tanggal_terima": "-"
+  },
+  "pengiriman_list": [
+    {
+      "no": "1",
+      "ref_id": "ID02024005432",
+      "tanggal_kirim": "2024-08-13",
+      "tanggal_terima": "2024-09-30",
+      "masa_berlaku": "2024-09-30~2025-09-29",
+      "raw": "2024-09-30\n*\nMasa Berlaku\n:\n2024-09-30~2025-09-29"
+    },
+    {
+      "no": "2",
+      "ref_id": "ID02025008008",
+      "tanggal_kirim": "2025-10-02",
+      "tanggal_terima": "-",
+      "masa_berlaku": null,
+      "raw": "-"
+    }
+  ],
+  "riwayat": [
+    [
+      "Ujian Bahasa Korea",
+      "Lulus",
+      "2024-07-26"
+    ],
+    [
+      "Tanggal Pengiriman Daftar Pencari Kerja",
+      "Dikirim",
+      "2025-10-02"
+    ],
+    [
+      "Tanggal Penerimaan Daftar Pencari Kerja",
+      "-",
+      ""
+    ],
+    [
+      "Keadaan pencarian pekerjaan",
+      "",
+      ""
+    ],
+    [
+      "Pengeluaran Izin Kerja",
+      "-",
+      ""
+    ],
+    [
+      "Pengiriman SLC",
+      "-",
+      ""
+    ],
+    [
+      "Penandatanganan SLC",
+      "-",
+      ""
+    ],
+    [
+      "Pengeluaran CCVI",
+      "-",
+      ""
+    ],
+    [
+      "Tanggal Masuk Sementara",
+      "-",
+      ""
+    ],
+    [
+      "Tanggal Masuk Sesungguhnya(Akan diumumkan oleh BNP2TKI)",
+      "-",
+      ""
+    ],
+    [
+      "Penugasan kerja",
+      "-",
+      ""
+    ],
+    [
+      "Jumlah pencocokan/mediasi pekerjaan",
+      "0",
+      "-"
+    ]
+  ]
+}

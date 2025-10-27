@@ -4,7 +4,7 @@ from handlers.command_wrapper import with_cooldown
 from handlers.get_info import get_info
 from handlers.get_prelim import get_prelim
 from handlers.responder import simple_responder
-from handlers.get_eps import cek_kolom
+from handlers.get_eps import eps_command
 from handlers.tanya_meta import tanya_meta
 from handlers.get_link import link_command
 from handlers.get_kurs import kurs_default, kurs_idr, kurs_won
@@ -14,6 +14,7 @@ from handlers.get_reg import get_reg
 from handlers.get_jadwal import get_jadwal
 from handlers.get_pass1 import get_pass1
 from handlers.get_pass2 import get_pass2
+from handlers.cek_id import cek_id
 from handlers.moderasi import (
     lihat_admin,
     moderasi,
@@ -32,7 +33,8 @@ from handlers.moderasi import (
 def register_handlers(app: Application):
     # === Command Handlers ===
     app.add_handler(CommandHandler("help", with_cooldown(help.help_command)))
-    app.add_handler(CommandHandler("cek", with_cooldown(cek_eps.cek_eps)))
+    app.add_handler(CommandHandler("cek_id", cek_id))
+    app.add_handler(CommandHandler(["eps", "e"], eps_command))
     app.add_handler(CommandHandler("get", with_cooldown(get_info)))
     app.add_handler(CommandHandler("prelim", with_cooldown(get_prelim)))
     app.add_handler(CommandHandler("reg", with_cooldown(get_reg)))
@@ -40,7 +42,7 @@ def register_handlers(app: Application):
     app.add_handler(CommandHandler("pass1", with_cooldown(get_pass1)))
     app.add_handler(CommandHandler("pass2", with_cooldown(get_pass2)))
     app.add_handler(CommandHandler("link", with_cooldown(link_command)))
-    app.add_handler(CommandHandler("cek_eps", with_cooldown(cek_kolom)))
+    app.add_handler(CommandHandler("cek_eps", with_cooldown(cek_eps)))
     app.add_handler(CommandHandler("tanya", with_cooldown(tanya_meta)))
     app.add_handler(CommandHandler("kurs", with_cooldown(kurs_default)))
     app.add_handler(CommandHandler("kursidr", with_cooldown(kurs_idr)))

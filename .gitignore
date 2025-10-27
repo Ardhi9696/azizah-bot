@@ -15,3 +15,9 @@ __pycache__/
 
 # 💻 cache
 .DS_Store
+data/eps_cache_auto.json
+data/eps_cache_manual.json
+
+#config
+config/eps_accounts.json
+
