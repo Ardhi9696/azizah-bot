@@ -185,33 +185,6 @@ def main():
     # === Register Handlers ===
     register_handlers(application)
 
-    # === Pesan saat startup ===
-    # async def startup_notify(app):
-    #     await app.bot.send_message(
-    #         chat_id=CHAT_ID,
-    #         text=(
-    #             "✅ *안녕하세요, 아자자입니다 (Hi, Azizah di sini!)*\n\n"
-    #             "🖥️ Monitoring Pengumuman dan Prelim Status : Aktif 🟢\n\n"
-    #             "Aku siap bantu kamu update seputar EPS-TOPIK! ✨\n\n"
-    #             "*Fitur yang bisa kamu pakai:*\n\n"
-    #             "• 🧾 Pengumuman Hasil Tahap 1 → `/pass1`\n\n"
-    #             "• 🏁 Pengumuman Hasil Final → `/pass2`\n\n"
-    #             "• 📝 Info Pendaftaran Ujian → `/reg`\n\n"
-    #             "• 📅 Jadwal Pelaksanaan Ujian → `/jadwal`\n\n"
-    #             "• 📊 Cek Nilai Ujian EPS → `/cek <nomor>`\n\n"
-    #             "• 📣 Panggilan Prelim G to G Korea → `/prelim`\n\n"
-    #             "• 📑 Info Umum G to G Korea → `/get <jumlah>`\n\n"
-    #             "• 💱 Info Nilai Tukar WON to IDR → `/kurs`\n\n"
-    #             "• 💱 Info Nilai Tukar WON to IDR Custom → `/kursidr <Nominal>`\n\n"
-    #             "• 💱 Info Nilai Tukar IDR to WON Custom → `/kurswon <Nominal>`\n\n"
-    #             "• 🤖 Tanya META AI→ `/tanya <isi pertanyaan>`\n\n"
-    #             "• 💬 Bantuan & Daftar Perintah → `/help`"
-    #         ),
-    #         parse_mode="Markdown",
-    #     )
-
-    # application.post_init = startup_notify
-
     # === Jadwal monitoring tiap menit ===
     application.job_queue.run_repeating(monitor_job, interval=60, first=5)
 

@@ -114,6 +114,8 @@ def _parse_args(text: str):
 
 # ====== HANDLER UTAMA ======
 async def eps_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not await _ensure_authorized_dm(update, context):
+        return
     uid = update.effective_user.id
     chat_id = update.effective_chat.id
     message_id = update.message.message_id

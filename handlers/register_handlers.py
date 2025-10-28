@@ -1,3 +1,4 @@
+# register_handlers.py
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
 
 from handlers.command_wrapper import with_cooldown
@@ -47,7 +48,7 @@ def register_handlers(app: Application):
     app.add_handler(CommandHandler("help", with_cooldown(help_command)))
     app.add_handler(CommandHandler("cek_id", with_cooldown(cek_id)))
     app.add_handler(CommandHandler("cek", with_cooldown(cek_ujian)))
-    app.add_handler(CommandHandler(["eps", "e"], with_cooldown(eps_command)))
+    app.add_handler(CommandHandler(["eps", "e"], eps_command))  # HAPUS with_cooldown
     app.add_handler(CommandHandler("get", with_cooldown(get_info)))
     app.add_handler(CommandHandler("prelim", with_cooldown(get_prelim)))
     app.add_handler(CommandHandler("reg", with_cooldown(get_reg)))
