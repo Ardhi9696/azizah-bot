@@ -38,10 +38,11 @@ def register_handlers(app: Application):
     app.add_handler(
         MessageHandler(
             filters.ChatType.SUPERGROUP
-            & ~filters.StatusUpdate.ALL,  # semua pesan user di supergroup
+            & ~filters.StatusUpdate.ALL
+            & ~filters.COMMAND,  # ⬅️ penting: jangan tangkap /cek, /help, dst.
             auto_delete_non_admin_in_threads,
         ),
-        group=0,  # priority paling awal
+        group=0,
     )
     app.add_handler(CommandHandler("help", with_cooldown(help_command)))
     app.add_handler(CommandHandler("cek_id", with_cooldown(cek_id)))

@@ -125,6 +125,10 @@ def tampilkan_hasil(data: dict, sumber: str = "") -> str:
 # ------- handler utama -------
 async def cek_ujian(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logger.info("Thread ID sekarang: %s", update.effective_message.message_thread_id)
+    logger.info(
+        f"[CHECK] /cek invoked in chat={update.effective_chat.id} thread={getattr(update.effective_message,'message_thread_id',None)} by uid={update.effective_user.id}"
+    )
+
     if not await handle_thread_guard("cek", update, context):
         return
 

@@ -538,5 +538,29 @@
     "lulus_min": "55",
     "status": "",
     "masa": "~"
+  },
+  "0172025C50800002": {
+    "nama": "QARAEV QOSIMBEK",
+    "negara": "TAJIKISTAN",
+    "bidang": "Manufacturing",
+    "tanggal": "20250802",
+    "mendengar": "50",
+    "bacaan": "37.5",
+    "total": "87.5",
+    "lulus_min": "55",
+    "status": "",
+    "masa": "~"
+  },
+  "0172025C50800003": {
+    "nama": "NAMOZOV ISLOMIDDIN",
+    "negara": "TAJIKISTAN",
+    "bidang": "Manufacturing",
+    "tanggal": "20250803",
+    "mendengar": "25",
+    "bacaan": "15",
+    "total": "40",
+    "lulus_min": "55",
+    "status": "",
+    "masa": "~"
   }
 }
