@@ -8,6 +8,15 @@ from typing import Dict
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import ContextTypes
+from handlers.eps_core import (
+    setup_driver,
+    login_with,
+    verifikasi_tanggal_lahir,
+    normalize_birthday,
+    akses_progress,
+    format_data,
+)
+
 
 from handlers.cache_utils import (
     CACHE_AUTO_FILE,
@@ -19,14 +28,7 @@ from handlers.cache_utils import (
     _now_jakarta_iso,
     _data_equal,
 )
-from handlers.get_eps_core import (
-    setup_driver,
-    login_with,
-    verifikasi_tanggal_lahir,
-    normalize_birthday,
-    akses_progress,
-    format_data,
-)
+
 
 # ====== CONFIG LOGGING ======
 logging.basicConfig(
@@ -224,6 +226,7 @@ async def eps_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         data = akses_progress(driver, prefer_row2=True)
         logger.info(f"[{uid}] ✅ Data progres berhasil diambil.")
 
+        # TENTUKAN STATUS
         cache = _load_cache(CACHE_AUTO_FILE)
         last = _get_last_snapshot_for_account(cache, uid, account_key)
         if last and _data_equal(last.get("data", {}), data):
@@ -233,6 +236,7 @@ async def eps_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             status = "(NEW PROGRESS)" if last else ""
             logger.info(f"[{uid}] 🆕 Data baru terdeteksi.")
 
+        # SIMPAN SNAPSHOT
         entry = {
             "telegram_id": uid,
             "checked_at": _now_jakarta_iso(),
@@ -243,14 +247,12 @@ async def eps_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         }
         _append_snapshot_for_account(cache, uid, account_key, entry)
         _save_cache(CACHE_AUTO_FILE, cache)
-        logger.info(f"[{uid}] 💾 Cache auto disimpan.")
 
-        msg = format_data(data)
-        msg = msg.replace(
-            "📋 Hasil Kemajuan EPS", f"📋 Hasil Kemajuan EPS {status}".strip()
-        )
+        # KIRIM PESAN —> JANGAN tambahkan spasi manual
+        msg = format_data(data, status=status)
         msg += f"\n\n<i>⏱️ Dicek pada: {entry['checked_at']}</i>"
         await _send_long_html(context, uid, msg)
+
         logger.info(f"[{uid}] 📤 Hasil dikirim ke Telegram.")
         logger.info(
             f"[{uid}] ✅ NAMA: {data.get('nama','-')} | REF: {data.get('aktif_ref_id','-')} | STATUS: {status or 'FIRST SNAPSHOT'}"
