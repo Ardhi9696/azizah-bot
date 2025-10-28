@@ -17,6 +17,7 @@ from handlers.get_pass1 import get_pass1
 from handlers.get_pass2 import get_pass2
 from handlers.cek_id import cek_id
 from handlers.help import help_command
+from handlers.thread_guard import auto_delete_non_admin_in_threads
 from handlers.moderasi import (
     lihat_admin,
     moderasi,
@@ -34,6 +35,14 @@ from handlers.moderasi import (
 
 def register_handlers(app: Application):
     # === Command Handlers ===
+    app.add_handler(
+        MessageHandler(
+            filters.ChatType.SUPERGROUP
+            & ~filters.StatusUpdate.ALL,  # semua pesan user di supergroup
+            auto_delete_non_admin_in_threads,
+        ),
+        group=0,  # priority paling awal
+    )
     app.add_handler(CommandHandler("help", with_cooldown(help_command)))
     app.add_handler(CommandHandler("cek_id", with_cooldown(cek_id)))
     app.add_handler(CommandHandler("cek", with_cooldown(cek_ujian)))
