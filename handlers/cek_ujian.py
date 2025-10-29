@@ -1,4 +1,3 @@
-# handlers/cek_ujian.py
 import os, json, re, logging
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -146,11 +145,29 @@ async def cek_ujian(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
+    # Kirim pesan "Mengecek hasil ujian..." dan simpan message_id-nya
+    wait_message = await update.message.reply_text("🔍 Mengecek hasil ujian...")
+    wait_message_id = wait_message.message_id
+
+    async def _delete_wait_message():
+        """Hapus pesan 'Mengecek hasil ujian...'"""
+        try:
+            await context.bot.delete_message(
+                chat_id=update.effective_chat.id, message_id=wait_message_id
+            )
+            logger.info("Pesan 'Mengecek hasil ujian...' dihapus.")
+        except Exception:
+            pass
+
     # cek cache dulu
     cache = load_cache()
     if nomor_ujian in cache:
         data = cache[nomor_ujian]
         logger.info("Cache hit untuk %s", nomor_ujian)
+
+        # Hapus pesan "Mengecek hasil ujian..." sebelum kirim hasil
+        await _delete_wait_message()
+
         await update.message.reply_text(
             tampilkan_hasil(data, "Tersimpan"), parse_mode="Markdown"
         )
@@ -184,6 +201,8 @@ async def cek_ujian(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         table = soup.select_one(".tbl_typeA")
         if not table:
+            # Hapus pesan "Mengecek hasil ujian..." sebelum kirim error
+            await _delete_wait_message()
             await update.message.reply_text(
                 "❌ Data tidak ditemukan atau situs berubah."
             )
@@ -209,15 +228,25 @@ async def cek_ujian(update: Update, context: ContextTypes.DEFAULT_TYPE):
             cache[nomor_ujian] = data
             save_cache(cache)
             logger.info("%s disimpan ke cache", nomor_ujian)
+
+            # Hapus pesan "Mengecek hasil ujian..." sebelum kirim hasil
+            await _delete_wait_message()
+
             await update.message.reply_text(
                 tampilkan_hasil(data), parse_mode="Markdown"
             )
         else:
+            # Hapus pesan "Mengecek hasil ujian..." sebelum kirim error
+            await _delete_wait_message()
             await update.message.reply_text(
                 "❌ Data tidak ditemukan atau belum diumumkan."
             )
     except Exception as e:
         logger.error("Gagal scraping EPS: %s", e, exc_info=True)
+
+        # Hapus pesan "Mengecek hasil ujian..." sebelum kirim error
+        await _delete_wait_message()
+
         await update.message.reply_text("❌ Terjadi kesalahan saat mengambil hasil.")
     finally:
         if driver:
