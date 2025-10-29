@@ -112,6 +112,16 @@ def _parse_args(text: str):
     return tokens[1:]  # buang nama command
 
 
+def _get_display_time():
+    """Get current time in GMT+7 format for display only"""
+    from datetime import datetime
+    import pytz
+
+    jakarta_tz = pytz.timezone("Asia/Jakarta")
+    now = datetime.now(jakarta_tz)
+    return now.strftime("%Y-%m-%d %H:%M:%S GMT+7")
+
+
 # ====== HANDLER UTAMA ======
 async def eps_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not await _ensure_authorized_dm(update, context):
@@ -123,10 +133,27 @@ async def eps_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     logger.info(f"\n=== 🚀 Command /eps dipanggil oleh UID={uid} ===")
 
-    async def _delete():
+    # Kirim pesan "mohon tunggu" dan simpan message_id-nya
+    wait_message = await update.message.reply_text(
+        "⏳ Mohon tunggu, sedang dalam proses pengecekan EPS..."
+    )
+    wait_message_id = wait_message.message_id
+
+    async def _delete_command():
+        """Hapus pesan command (hanya untuk mode manual)"""
         try:
             await context.bot.delete_message(chat_id=chat_id, message_id=message_id)
             logger.info(f"[{uid}] Pesan command dihapus (keamanan).")
+        except Exception:
+            pass
+
+    async def _delete_wait_message():
+        """Hapus pesan 'mohon tunggu'"""
+        try:
+            await context.bot.delete_message(
+                chat_id=chat_id, message_id=wait_message_id
+            )
+            logger.info(f"[{uid}] Pesan 'mohon tunggu' dihapus.")
         except Exception:
             pass
 
@@ -148,7 +175,8 @@ async def eps_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     uid, "❌ Gagal login (cek username/password)."
                 )
                 logger.warning(f"[{uid}] Login gagal.")
-                await _delete()
+                await _delete_wait_message()
+                await _delete_command()  # Hapus command di mode manual
                 return
 
             if not verifikasi_tanggal_lahir(driver, birthday):
@@ -156,7 +184,8 @@ async def eps_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     uid, "❌ Verifikasi tanggal lahir gagal. Format YYMMDD/ YYYYMMDD."
                 )
                 logger.warning(f"[{uid}] Verifikasi tanggal lahir gagal.")
-                await _delete()
+                await _delete_wait_message()
+                await _delete_command()  # Hapus command di mode manual
                 return
 
             logger.info(f"[{uid}] 📦 Mengambil data progres EPS...")
@@ -176,7 +205,10 @@ async def eps_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             _save_cache(CACHE_MANUAL_FILE, cache)
             logger.info(f"[{uid}] 💾 Cache manual disimpan.")
 
-            msg = format_data(data) + f"\n\n<i>⏱️ Dicek pada: {entry['checked_at']}</i>"
+            # Hapus pesan "mohon tunggu" sebelum kirim hasil
+            await _delete_wait_message()
+
+            msg = format_data(data) + f"\n\n<i>⏱️ Dicek pada: {_get_display_time()}</i>"
             await _send_long_html(context, uid, msg)
             logger.info(f"[{uid}] 📤 Hasil dikirim ke Telegram.")
             logger.info(
@@ -186,9 +218,11 @@ async def eps_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except Exception as e:
             logger.exception(f"[{uid}] EPS manual error: {e}")
             await context.bot.send_message(uid, f"❌ Terjadi kesalahan: {e}")
+            await _delete_wait_message()
+            await _delete_command()  # Hapus command di mode manual bahkan jika error
         finally:
             driver.quit()
-            await _delete()
+            await _delete_command()  # Pastikan command dihapus di mode manual
         return
 
     # === MODE AUTO (tanpa argumen) ===
@@ -200,6 +234,8 @@ async def eps_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             uid, "❌ Akun EPS kamu belum terdaftar di config/eps_accounts.json."
         )
         logger.warning(f"[{uid}] Tidak ada kredensial di config.")
+        await _delete_wait_message()
+        # TIDAK hapus command di mode auto
         return
 
     username = creds.get("username", "")
@@ -215,6 +251,8 @@ async def eps_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 uid, "❌ Gagal login ke EPS (cek username/password)."
             )
             logger.warning(f"[{uid}] Login gagal.")
+            await _delete_wait_message()
+            # TIDAK hapus command di mode auto
             return
 
         if not verifikasi_tanggal_lahir(driver, birthday):
@@ -222,6 +260,8 @@ async def eps_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 uid, "❌ Verifikasi tanggal lahir gagal. Format YYMMDD/ YYYYMMDD."
             )
             logger.warning(f"[{uid}] Verifikasi tanggal lahir gagal.")
+            await _delete_wait_message()
+            # TIDAK hapus command di mode auto
             return
 
         logger.info(f"[{uid}] 📦 Mengambil data progres EPS...")
@@ -250,9 +290,12 @@ async def eps_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         _append_snapshot_for_account(cache, uid, account_key, entry)
         _save_cache(CACHE_AUTO_FILE, cache)
 
+        # Hapus pesan "mohon tunggu" sebelum kirim hasil
+        await _delete_wait_message()
+
         # KIRIM PESAN —> JANGAN tambahkan spasi manual
         msg = format_data(data, status=status)
-        msg += f"\n\n<i>⏱️ Dicek pada: {entry['checked_at']}</i>"
+        msg += f"\n\n<i>⏱️ Dicek pada: {_get_display_time()}</i>"
         await _send_long_html(context, uid, msg)
 
         logger.info(f"[{uid}] 📤 Hasil dikirim ke Telegram.")
@@ -263,6 +306,8 @@ async def eps_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         logger.exception(f"[{uid}] EPS auto error: {e}")
         await context.bot.send_message(uid, f"❌ Terjadi kesalahan: {e}")
+        await _delete_wait_message()
+        # TIDAK hapus command di mode auto bahkan jika error
     finally:
         driver.quit()
         logger.info(f"[{uid}] 🧹 Selenium driver ditutup.")
