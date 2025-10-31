@@ -17,6 +17,7 @@ __pycache__/
 .DS_Store
 data/eps_cache_auto.json
 data/eps_cache_manual.json
+chrome_profiles/
 
 #config
 config/eps_accounts.json

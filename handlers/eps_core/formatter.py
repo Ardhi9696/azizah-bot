@@ -2,6 +2,8 @@
 from html import escape as _esc
 import re
 from typing import Optional
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 from .constants import DATE_RE, EMOJI_MAP, NORMALIZE_LABELS
 
 
@@ -31,6 +33,84 @@ def _roster_key(r):
         return 0
 
 
+def _ekstrak_tanggal_lulus_dari_riwayat(riwayat: list) -> Optional[str]:
+    """
+    Ekstrak tanggal lulus ujian bahasa Korea dari riwayat progres
+    """
+    try:
+        for prosedur_raw, status_txt, tanggal in riwayat:
+            prosedur = NORMALIZE_LABELS.get(prosedur_raw, prosedur_raw).strip()
+
+            # Cek apakah ini ujian bahasa Korea dan statusnya Lulus
+            if any(
+                keyword in prosedur.lower()
+                for keyword in [
+                    "ujian bahasa korea",
+                    "korean language",
+                    "한국어능력시험",
+                ]
+            ):
+                if (
+                    "lulus" in (status_txt or "").lower()
+                    or "pass" in (status_txt or "").lower()
+                ):
+                    if tanggal and tanggal != "-":
+                        # Ekstrak tanggal dari format "2024-07-26"
+                        match = DATE_RE.search(tanggal)
+                        if match:
+                            return match.group(0)
+
+        return None
+    except Exception:
+        return None
+
+
+def _hitung_sisa_masa_berlaku(tanggal_lulus_str: str) -> str:
+    """
+    Hitung sisa masa berlaku sertifikat (2 tahun dari tanggal lulus)
+    """
+    try:
+        if not tanggal_lulus_str:
+            return "❓ <b>Tanggal lulus tidak ditemukan</b>"
+
+        # Parse tanggal lulus
+        tanggal_lulus = datetime.strptime(tanggal_lulus_str, "%Y-%m-%d")
+
+        # Hitung tanggal kedaluwarsa (2 tahun dari tanggal lulus)
+        tanggal_kedaluwarsa = tanggal_lulus + relativedelta(years=2)
+
+        # Hitung selisih dengan hari ini
+        hari_ini = datetime.now()
+
+        # Format tanggal untuk display
+        tgl_lulus_display = tanggal_lulus.strftime("%d %b %Y")
+        tgl_expire_display = tanggal_kedaluwarsa.strftime("%d %b %Y")
+
+        if hari_ini > tanggal_kedaluwarsa:
+            hari_terlambat = (hari_ini - tanggal_kedaluwarsa).days
+            return f"⛔ <b>KEDALUWARSA ({hari_terlambat} hari)</b>"
+
+        # Hitung sisa waktu
+        sisa = relativedelta(tanggal_kedaluwarsa, hari_ini)
+
+        # Format output dengan warna berdasarkan urgency
+        if sisa.years >= 1:
+            return f"🟢 <b>{sisa.years} tahun {sisa.months} bulan</b>"
+        elif sisa.months >= 6:
+            return f"🟡 <b>{sisa.months} bulan {sisa.days} hari</b>"
+        elif sisa.months >= 3:
+            return f"🟠 <b>{sisa.months} bulan {sisa.days} hari</b>"
+        elif sisa.months >= 1:
+            return f"🔴 <b>{sisa.months} bulan {sisa.days} hari</b>"
+        else:
+            return f"🚨 <b>{sisa.days} HARI LAGI!</b>"
+
+    except ValueError:
+        return "❓ <b>Format tanggal tidak valid</b>"
+    except Exception:
+        return "❓ <b>Error perhitungan</b>"
+
+
 def format_data(data: dict, status: str = "", checked_at: Optional[str] = None) -> str:
     nama = _esc_text(data.get("nama", "-"))
     aktif_ref = _esc_text(data.get("aktif_ref_id") or "-")
@@ -43,6 +123,16 @@ def format_data(data: dict, status: str = "", checked_at: Optional[str] = None) 
     pengiriman_list = data.get("pengiriman_list") or []
     total_mediasi = sum(_to_int(r.get("mediasi", 0)) for r in pengiriman_list)
 
+    # ====== EKSTRAK TANGGAL LULUS DAN HITUNG SISA MASA BERLAKU ======
+    riwayat = data.get("riwayat", []) or []
+    tanggal_lulus = _ekstrak_tanggal_lulus_dari_riwayat(riwayat)
+    sisa_masa_berlaku = (
+        _hitung_sisa_masa_berlaku(tanggal_lulus)
+        if tanggal_lulus
+        else "❓ <b>Tanggal lulus tidak ditemukan</b>"
+    )
+    # ================================================================
+
     title_suffix = f" {status}".strip() if status else ""
     lines = []
     lines.append(f"📋 <b>Hasil Kemajuan EPS{title_suffix}</b>")
@@ -53,7 +143,8 @@ def format_data(data: dict, status: str = "", checked_at: Optional[str] = None) 
     lines.append(f"📮 Pengiriman Terbaru : <code>{t_kirim}</code>")
     lines.append(f"📥 Penerimaan Terbaru : <code>{t_terima}</code>")
     if ref_id_latest and ref_id_latest != "-":
-        lines.append(f"🆔 ID Nodongbu (terbaru) : <code>{ref_id_latest}</code>")
+        lines.append(f"🆔 ID Nodongbu Terbaru : <code>{ref_id_latest}</code>")
+        lines.append(f"📅 Sisa Masa Berlaku Sertifikat : {sisa_masa_berlaku}")
 
     # Riwayat roster & mediasi
     lines.append("\n━━━━━━━━━━━━━━━━━━━")
@@ -85,7 +176,6 @@ def format_data(data: dict, status: str = "", checked_at: Optional[str] = None) 
     lines.append("🧾 <b>Progres Kemajuan Imigrasi</b>")
 
     job_links = data.get("tautan_pekerjaan") or {}
-    riwayat = data.get("riwayat", []) or []
 
     for idx, (prosedur_raw, status_txt, tanggal) in enumerate(riwayat, 1):
         prosedur = NORMALIZE_LABELS.get(prosedur_raw, prosedur_raw).strip()

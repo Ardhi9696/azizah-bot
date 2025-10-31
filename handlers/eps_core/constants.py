@@ -21,6 +21,8 @@ RANGE_RE = re.compile(r"(\d{4}-\d{2}-\d{2}~\d{4}-\d{2}-\d{2})")
 # Normalisasi label & mapping emoji
 NORMALIZE_LABELS = {
     "알선 횟수": "Jumlah pencocokan/mediasi pekerjaan",
+    "고용허가제 한국어능력시험": "Ujian Bahasa Korea",  # Tambahkan ini
+    "Korean Language Test": "Ujian Bahasa Korea",  # Tambahkan ini
 }
 
 MEDIASI_LABELS = {"Jumlah pencocokan/mediasi pekerjaan", "알선 횟수"}

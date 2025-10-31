@@ -91,3 +91,21 @@ def extract_mediasi_from_riwayat(riwayat) -> str:
             m = re.search(r"\d+", (status or ""))
             return m.group(0) if m else (status or "-")
     return "-"
+
+
+def pick_latest(pengiriman_list: List[Dict]) -> Optional[Dict]:
+    """
+    Ambil entry 'terbaru' berdasarkan kolom 'no' (angka roster paling besar).
+    Fallback ke elemen terakhir jika parsing gagal.
+    """
+    if not pengiriman_list:
+        return None
+    try:
+        import re as _re
+
+        return max(
+            pengiriman_list,
+            key=lambda r: int(_re.sub(r"\D", "", r.get("no", "") or "0") or 0),
+        )
+    except Exception:
+        return pengiriman_list[-1]
