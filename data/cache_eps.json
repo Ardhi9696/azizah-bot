@@ -574,5 +574,17 @@
     "lulus_min": "80",
     "status": "",
     "masa": "~"
+  },
+  "0122025C50910029": {
+    "nama": "EFENI RARA",
+    "negara": "INDONESIA",
+    "bidang": "Manufacturing",
+    "tanggal": "20251017",
+    "mendengar": "90",
+    "bacaan": "95",
+    "total": "185",
+    "lulus_min": "90",
+    "status": "Y",
+    "masa": "20251020~20271019"
   }
 }
