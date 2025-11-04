@@ -30,6 +30,32 @@ WAIT_LONG = 10  # Reduced from 20
 MAX_RETRIES = 2  # Reduced from 3
 
 
+# Tambahkan function untuk force cleanup
+def cleanup_old_sessions(age_seconds: int = 3600, logger_=None) -> int:
+    """Cleanup sessions yang lebih tua dari age_seconds"""
+    log = logger_ or logger
+    now = time.monotonic()
+    to_close = []
+
+    for key, sess in _SESS.items():
+        session_age = now - sess.created_monotonic
+        if session_age > age_seconds:
+            to_close.append(key)
+            log.info(
+                f"[SESSION] Session {key} age {session_age:.1f}s > {age_seconds}s, scheduling cleanup"
+            )
+
+    for key in to_close:
+        _close_driver_fast(key)
+
+    if to_close:
+        log.info(
+            f"[SESSION] Cleaned up {len(to_close)} old sessions (> {age_seconds}s)"
+        )
+
+    return len(to_close)
+
+
 @dataclass
 class _Session:
     driver: "selenium.webdriver.Chrome"
@@ -206,6 +232,7 @@ def ensure_session_fast(
     return False
 
 
+# Update with_session_fast untuk auto cleanup yang lebih aggressive
 def with_session_fast(
     user_key: str,
     username: str,
@@ -213,23 +240,27 @@ def with_session_fast(
     birthday: str,
     fn: Callable[[Any], Any],
     ttl_sec: Optional[int] = None,
-    auto_cleanup: bool = False,  # ADD THIS PARAMETER untuk compatibility
+    auto_cleanup: bool = True,  # Default True sekarang
     logger_=None,
 ):
-    """Optimized session handler untuk speed"""
+    """Optimized session handler dengan auto cleanup"""
     ttl = ttl_sec or DEFAULT_TTL_SEC
     now = time.monotonic()
     log = logger_ or logger
 
-    # Handle auto_cleanup jika diperlukan
-    if auto_cleanup:
-        cleanup_idle_fast(ttl_sec=ttl, logger_=logger_)
+    # 🚀 SELALU cleanup sessions yang idle > 1 jam
+    cleanup_idle_fast(ttl_sec=3600, logger_=logger_)
 
-    # Get or create session FAST
+    # Juga cleanup sessions yang terlalu tua
+    cleanup_old_sessions(age_seconds=3600, logger_=logger_)
+
+    # Get or create session
     sess = _SESS.get(user_key)
     if not sess:
         try:
-            driver = _create_driver_fast(profile_name=user_key)
+            from .driver import setup_driver
+
+            driver = setup_driver(profile_name=user_key)
             sess = _Session(
                 driver=driver,
                 created_monotonic=now,
@@ -238,47 +269,49 @@ def with_session_fast(
                 is_authenticated=False,
             )
             _SESS[user_key] = sess
-            log.info(f"[SESSION] Fast session created for {user_key}")
+            log.info(f"[SESSION] New session created for {user_key}")
         except Exception as e:
-            log.error(f"[SESSION] Fast creation failed: {e}")
-            raise RuntimeError(f"Gagal membuat session cepat: {e}")
+            log.error(f"[SESSION] Creation failed: {e}")
+            raise RuntimeError(f"Gagal membuat session: {e}")
 
     driver = sess.driver
 
-    # Fast TTL check
+    # 🚀 FORCE LOGIN JIKA SESSION SUDAH > 45 MENIT (lebih aggressive)
+    session_age = now - sess.created_monotonic
     ttl_expired = (
         (now - sess.last_login_monotonic) > ttl if sess.last_login_monotonic else True
     )
-    force_login = ttl_expired or not sess.is_authenticated
+    force_login = (
+        ttl_expired or session_age > 2700 or not sess.is_authenticated
+    )  # 45 menit
 
     log.info(
-        f"[SESSION] Fast TTL check: expired={ttl_expired}, authenticated={sess.is_authenticated}"
+        f"[SESSION] TTL check: expired={ttl_expired}, session_age={session_age:.0f}s, authenticated={sess.is_authenticated}"
     )
 
     try:
-        # Fast session ensure
+        # Ensure session dengan force login jika perlu
         if ensure_session_fast(driver, username, password, birthday, force_login, log):
-            # Update session state
             _SESS[user_key].last_login_monotonic = time.monotonic()
             _SESS[user_key].is_authenticated = True
             _SESS[user_key].last_used_monotonic = time.monotonic()
-            log.info("[SESSION] Fast session ensured")
+            log.info("[SESSION] Session ensured")
         else:
-            log.error("[SESSION] Fast ensure failed")
-            raise RuntimeError("Gagal memastikan session cepat")
+            log.error("[SESSION] Ensure failed")
+            # 🚀 CLEANUP FAILED SESSION
+            _close_driver_fast(user_key)
+            raise RuntimeError("Gagal memastikan session")
 
         # Execute function
-        log.info("[SESSION] Executing function with fast session")
         result = fn(driver)
         _SESS[user_key].last_used_monotonic = time.monotonic()
 
         return result
 
     except Exception as e:
-        log.error(f"[SESSION] Fast session error: {e}")
-        # Mark as not authenticated on error
-        if user_key in _SESS:
-            _SESS[user_key].is_authenticated = False
+        log.error(f"[SESSION] Session error: {e}")
+        # 🚀 CLEANUP ON ERROR
+        _close_driver_fast(user_key)
         raise
 
 
