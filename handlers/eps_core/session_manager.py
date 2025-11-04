@@ -10,7 +10,7 @@ from selenium.common.exceptions import (
     UnexpectedAlertPresentException,
     NoAlertPresentException,
     WebDriverException,
-    TimeoutException
+    TimeoutException,
 )
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
@@ -24,10 +24,11 @@ logger = logging.getLogger(__name__)
 
 # ===== OPTIMIZED CONFIGURATION =====
 DEFAULT_TTL_SEC = 30 * 60  # 30 menit saja
-WAIT_SHORT = 1  # Reduced from 5
-WAIT_MED = 3    # Reduced from 10  
+WAIT_SHORT = 2  # Reduced from 5
+WAIT_MED = 5  # Reduced from 10
 WAIT_LONG = 10  # Reduced from 20
 MAX_RETRIES = 2  # Reduced from 3
+
 
 @dataclass
 class _Session:
@@ -94,13 +95,13 @@ def _fast_navigation(driver, url: str) -> bool:
     try:
         driver.set_page_load_timeout(10)  # Timeout pendek
         driver.get(url)
-        
+
         # Quick alert check
         _quick_alert_check(driver)
-        
+
         # Fast page ready check
         return _is_page_ready_fast(driver)
-        
+
     except TimeoutException:
         logger.warning(f"Navigation timeout to {url}, but continuing...")
         return True  # Continue anyway
@@ -113,26 +114,26 @@ def _quick_login_flow(driver, username: str, password: str, birthday: str) -> bo
     """Fast login flow"""
     try:
         logger.info(f"[SESSION] Quick login for {username}")
-        
+
         # Step 1: Navigate to login (fast)
         if not _fast_navigation(driver, LOGIN_URL):
             return False
-        
+
         time.sleep(WAIT_SHORT)
-        
+
         # Step 2: Login
         if not login_with(driver, username, password):
             return False
-        
+
         time.sleep(WAIT_SHORT)
-        
-        # Step 3: Birthday verification  
+
+        # Step 3: Birthday verification
         if not verifikasi_tanggal_lahir(driver, birthday):
             return False
-            
+
         logger.info("[SESSION] Quick login completed")
         return True
-        
+
     except Exception as e:
         logger.error(f"[SESSION] Quick login error: {e}")
         return False
@@ -144,17 +145,17 @@ def _quick_session_check(driver, username: str, password: str, birthday: str) ->
         # Coba navigasi cepat ke progress
         if not _fast_navigation(driver, PROGRESS_URL):
             return False
-        
+
         # Cek cepat apakah perlu login
         page = _fast_page_check(driver)
         need_login = "Please Login" in page or "birthChk" in page
-        
+
         if not need_login:
             return True
-            
+
         # Quick login jika diperlukan
         return _quick_login_flow(driver, username, password, birthday)
-        
+
     except Exception as e:
         logger.warning(f"[SESSION] Quick check warning: {e}")
         return False
@@ -166,42 +167,42 @@ def ensure_session_fast(
     password: str,
     birthday: str,
     force_login: bool = False,
-    logger_ = None,
+    logger_=None,
 ) -> bool:
     """Fast session ensure dengan minimal waiting"""
     log = logger_ or logger
-    
+
     for attempt in range(MAX_RETRIES):
         try:
             log.info(f"[SESSION] Fast ensure attempt {attempt + 1}")
-            
+
             # Quick navigation first
             if not _fast_navigation(driver, PROGRESS_URL):
                 if force_login:
                     return _quick_login_flow(driver, username, password, birthday)
                 return False
-            
+
             # Quick page check
             page = _fast_page_check(driver)
             need_login = force_login or "Please Login" in page or "birthChk" in page
-            
+
             if not need_login:
                 log.info("[SESSION] Session valid (fast check)")
                 return True
-                
+
             # Quick login
             if _quick_login_flow(driver, username, password, birthday):
                 log.info("[SESSION] Quick login successful")
                 return True
-                
+
             log.warning(f"[SESSION] Fast attempt {attempt + 1} failed")
-            
+
         except Exception as e:
             log.error(f"[SESSION] Fast ensure error: {e}")
-        
+
         if attempt < MAX_RETRIES - 1:
             time.sleep(WAIT_SHORT)
-    
+
     return False
 
 
@@ -213,7 +214,7 @@ def with_session_fast(
     fn: Callable[[Any], Any],
     ttl_sec: Optional[int] = None,
     auto_cleanup: bool = False,  # ADD THIS PARAMETER untuk compatibility
-    logger_ = None,
+    logger_=None,
 ):
     """Optimized session handler untuk speed"""
     ttl = ttl_sec or DEFAULT_TTL_SEC
@@ -234,7 +235,7 @@ def with_session_fast(
                 created_monotonic=now,
                 last_used_monotonic=now,
                 last_login_monotonic=0.0,
-                is_authenticated=False
+                is_authenticated=False,
             )
             _SESS[user_key] = sess
             log.info(f"[SESSION] Fast session created for {user_key}")
@@ -243,13 +244,17 @@ def with_session_fast(
             raise RuntimeError(f"Gagal membuat session cepat: {e}")
 
     driver = sess.driver
-    
+
     # Fast TTL check
-    ttl_expired = (now - sess.last_login_monotonic) > ttl if sess.last_login_monotonic else True
+    ttl_expired = (
+        (now - sess.last_login_monotonic) > ttl if sess.last_login_monotonic else True
+    )
     force_login = ttl_expired or not sess.is_authenticated
-    
-    log.info(f"[SESSION] Fast TTL check: expired={ttl_expired}, authenticated={sess.is_authenticated}")
-    
+
+    log.info(
+        f"[SESSION] Fast TTL check: expired={ttl_expired}, authenticated={sess.is_authenticated}"
+    )
+
     try:
         # Fast session ensure
         if ensure_session_fast(driver, username, password, birthday, force_login, log):
@@ -261,14 +266,14 @@ def with_session_fast(
         else:
             log.error("[SESSION] Fast ensure failed")
             raise RuntimeError("Gagal memastikan session cepat")
-        
+
         # Execute function
         log.info("[SESSION] Executing function with fast session")
         result = fn(driver)
         _SESS[user_key].last_used_monotonic = time.monotonic()
-        
+
         return result
-        
+
     except Exception as e:
         log.error(f"[SESSION] Fast session error: {e}")
         # Mark as not authenticated on error
@@ -277,17 +282,17 @@ def with_session_fast(
         raise
 
 
-def cleanup_idle_fast(ttl_sec: int = DEFAULT_TTL_SEC, logger_ = None) -> int:
+def cleanup_idle_fast(ttl_sec: int = DEFAULT_TTL_SEC, logger_=None) -> int:
     """Fast cleanup"""
     now = time.monotonic()
     to_close = [k for k, s in _SESS.items() if (now - s.last_used_monotonic) > ttl_sec]
-    
+
     for k in to_close:
         _close_driver_fast(k)
-        
+
     if to_close:
         (logger_ or logger).info(f"[SESSION] Fast cleaned {len(to_close)} sessions")
-    
+
     return len(to_close)
 
 
@@ -296,7 +301,7 @@ def _close_driver_fast(user_key: str):
     sess = _SESS.pop(user_key, None)
     if not sess:
         return
-        
+
     try:
         sess.driver.quit()
     except:
@@ -313,7 +318,7 @@ def with_session(
     fn: Callable[[Any], Any],
     ttl_sec: Optional[int] = None,
     auto_cleanup: bool = False,
-    logger_ = None,
+    logger_=None,
 ):
     """Alias untuk fast version dengan parameter lengkap"""
     return with_session_fast(
@@ -324,14 +329,20 @@ def with_session(
         fn=fn,
         ttl_sec=ttl_sec,
         auto_cleanup=auto_cleanup,  # Pass the parameter
-        logger_=logger_
+        logger_=logger_,
     )
 
-def ensure_session(driver, username, password, birthday, relogin_if_needed=True, logger_=None):
-    """Alias untuk fast version"""
-    return ensure_session_fast(driver, username, password, birthday, relogin_if_needed, logger_)
 
-def cleanup_idle(ttl_sec: int = DEFAULT_TTL_SEC, logger_ = None) -> int:
+def ensure_session(
+    driver, username, password, birthday, relogin_if_needed=True, logger_=None
+):
+    """Alias untuk fast version"""
+    return ensure_session_fast(
+        driver, username, password, birthday, relogin_if_needed, logger_
+    )
+
+
+def cleanup_idle(ttl_sec: int = DEFAULT_TTL_SEC, logger_=None) -> int:
     """Alias untuk fast version"""
     return cleanup_idle_fast(ttl_sec, logger_)
 
@@ -347,17 +358,16 @@ def close_all():
 def get_session_stats() -> Dict[str, Any]:
     """Get session statistics untuk monitoring"""
     now = time.monotonic()
-    stats = {
-        "total_sessions": len(_SESS),
-        "sessions": {}
-    }
-    
+    stats = {"total_sessions": len(_SESS), "sessions": {}}
+
     for key, sess in _SESS.items():
         stats["sessions"][key] = {
             "age_seconds": now - sess.created_monotonic,
             "idle_seconds": now - sess.last_used_monotonic,
-            "since_login_seconds": now - sess.last_login_monotonic if sess.last_login_monotonic else None,
-            "authenticated": sess.is_authenticated
+            "since_login_seconds": (
+                now - sess.last_login_monotonic if sess.last_login_monotonic else None
+            ),
+            "authenticated": sess.is_authenticated,
         }
-    
+
     return stats
