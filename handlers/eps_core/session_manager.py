@@ -1,4 +1,3 @@
-# handlers/eps_core/session_manager.py
 from __future__ import annotations
 
 import time
@@ -12,9 +11,9 @@ from selenium.common.exceptions import (
     NoAlertPresentException,
     WebDriverException,
 )
-from selenium.webdriver.support import expected_conditions as EC  # type: ignore
-from selenium.webdriver.common.by import By  # type: ignore
-from selenium.webdriver.support.ui import WebDriverWait  # type: ignore
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
 
 from .driver import setup_driver
 from .auth import login_with, verifikasi_tanggal_lahir
@@ -23,10 +22,10 @@ from .constants import LOGIN_URL, PROGRESS_URL
 logger = logging.getLogger(__name__)
 
 # ===== Konfigurasi =====
-DEFAULT_TTL_SEC = 70 * 60  # ~55 menit (cookie EPS biasanya ~1 jam)
-WAIT_SHORT = 2
-WAIT_MED = 6
-WAIT_LONG = 8
+DEFAULT_TTL_SEC = 55 * 60  # 55 menit
+WAIT_SHORT = 3
+WAIT_MED = 8
+WAIT_LONG = 12
 
 
 @dataclass
@@ -34,65 +33,72 @@ class _Session:
     driver: "selenium.webdriver.Chrome"
     created_monotonic: float
     last_used_monotonic: float
-    last_login_monotonic: float  # DISET HANYA setelah login flow sukses
+    last_login_monotonic: float
 
 
-# registry sesi in-memory: user_key -> _Session
 _SESS: Dict[str, _Session] = {}
 
 
-# ===== Util: Alert & Page Source aman =====
 def _accept_login_alert_if_any(driver, timeout: int = 2) -> bool:
+    """Handle alert dengan improved logic"""
     try:
         WebDriverWait(driver, timeout).until(EC.alert_is_present())
         try:
-            a = driver.switch_to.alert
-            _ = (a.text or "").strip()  # bisa dipakai untuk debug kalau mau
-            a.accept()
+            alert = driver.switch_to.alert
+            alert_text = alert.text or ""
+            alert.accept()
+            logger.debug(f"Alert accepted: {alert_text}")
             return True
         except NoAlertPresentException:
             return False
-    except Exception:
+    except Exception as e:
+        logger.debug(f"No alert present: {e}")
         return False
 
 
 def _safe_page_source(driver) -> str:
+    """Get page source dengan error handling"""
     try:
         return driver.page_source or ""
     except UnexpectedAlertPresentException:
         _accept_login_alert_if_any(driver, timeout=1)
-        time.sleep(0.15)  # cooldown kecil agar driver stabil
+        time.sleep(0.5)
         try:
             return driver.page_source or ""
         except Exception:
             return ""
-    except Exception:
+    except Exception as e:
+        logger.debug(f"Error getting page source: {e}")
         return ""
 
 
-# ===== Util: Driver =====
 def _create_driver_for(profile_name: Optional[str] = None):
-    drv = setup_driver(profile_name=profile_name or "default")
-    logger.info(
-        "[DRIVER] Chrome WebDriver started for profile: %s", profile_name or "default"
-    )
-    return drv
+    """Create driver dengan error handling"""
+    try:
+        drv = setup_driver(profile_name=profile_name or "default")
+        logger.info(f"[DRIVER] Chrome WebDriver started for profile: {profile_name or 'default'}")
+        return drv
+    except Exception as e:
+        logger.error(f"[DRIVER] Failed to create driver: {e}")
+        raise
 
 
 def _close_driver(user_key: str):
+    """Close driver dengan cleanup"""
     sess = _SESS.pop(user_key, None)
     if not sess:
         return
     try:
         sess.driver.quit()
-    except Exception:
-        pass
+        logger.debug(f"[SESSION] Driver closed for {user_key}")
+    except Exception as e:
+        logger.debug(f"[SESSION] Error closing driver: {e}")
 
 
-# ===== Util: Deteksi “siap di halaman progress” cepat =====
 def _is_progress_ready(driver) -> bool:
+    """Check if progress page is ready"""
     try:
-        WebDriverWait(driver, 1).until(
+        WebDriverWait(driver, 3).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, "table.tbl_typeA.center"))
         )
         return True
@@ -100,31 +106,51 @@ def _is_progress_ready(driver) -> bool:
         return False
 
 
-def _goto_progress_and_wait(driver) -> None:
-    if _is_progress_ready(driver):
-        return
-    driver.get(PROGRESS_URL)
-    _accept_login_alert_if_any(driver, timeout=1)
+def _goto_progress_and_wait(driver) -> bool:
+    """Navigate to progress page dengan timeout handling"""
     try:
+        if _is_progress_ready(driver):
+            return True
+            
+        driver.get(PROGRESS_URL)
+        _accept_login_alert_if_any(driver, timeout=2)
+        
         WebDriverWait(driver, WAIT_LONG).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, "table.tbl_typeA.center"))
         )
-    except Exception:
-        # best-effort
-        pass
+        return True
+    except Exception as e:
+        logger.warning(f"[SESSION] Failed to navigate to progress: {e}")
+        return False
 
 
-# ===== Login flow =====
 def _do_login_flow(driver, username: str, password: str, birthday: str) -> bool:
-    driver.get(LOGIN_URL)
-    if not login_with(driver, username, password):
+    """Execute complete login flow dengan improved error handling"""
+    try:
+        logger.info(f"[SESSION] Starting login flow for {username}")
+        
+        # Step 1: Navigate to login page
+        driver.get(LOGIN_URL)
+        time.sleep(WAIT_SHORT)
+        
+        # Step 2: Login
+        if not login_with(driver, username, password):
+            logger.error("[SESSION] Login failed")
+            return False
+        
+        # Step 3: Birthday verification
+        if not verifikasi_tanggal_lahir(driver, birthday):
+            logger.error("[SESSION] Birthday verification failed")
+            return False
+            
+        logger.info("[SESSION] Login flow completed successfully")
+        return True
+        
+    except Exception as e:
+        logger.error(f"[SESSION] Login flow error: {e}")
         return False
-    if not verifikasi_tanggal_lahir(driver, birthday):
-        return False
-    return True
 
 
-# ===== Inti: memastikan sesi valid =====
 def ensure_session(
     driver,
     username: str,
@@ -133,200 +159,143 @@ def ensure_session(
     relogin_if_needed: bool = True,
     logger_: Optional[logging.Logger] = None,
 ) -> bool:
-    log = logger_.info if logger_ else logger.info
+    """Ensure valid session dengan simplified logic"""
+    log = logger_ or logger
+    max_retries = 2
+    
+    for attempt in range(max_retries):
+        try:
+            log.info(f"[SESSION] ensure_session attempt {attempt + 1}")
+            
+            # Navigate to progress page first
+            if not _goto_progress_and_wait(driver):
+                log.warning("[SESSION] Failed to navigate to progress page")
+                if not relogin_if_needed:
+                    return False
+                continue
+            
+            # Check if login is required
+            page = _safe_page_source(driver)
+            need_login = ("Please Login" in page) or ("birthChk" in page)
+            
+            if not need_login:
+                log.info("[SESSION] Session is valid")
+                return True
+                
+            if not relogin_if_needed:
+                log.warning("[SESSION] Login needed but relogin disabled")
+                return False
+            
+            # Perform login
+            log.info("[SESSION] Session expired, performing login...")
+            if _do_login_flow(driver, username, password, birthday):
+                # Verify login success
+                if _goto_progress_and_wait(driver):
+                    page_after = _safe_page_source(driver)
+                    if "Please Login" not in page_after:
+                        log.info("[SESSION] Login successful")
+                        return True
+            
+            log.warning(f"[SESSION] Login attempt {attempt + 1} failed")
+            if attempt < max_retries - 1:
+                time.sleep(WAIT_MED)
+                
+        except Exception as e:
+            log.error(f"[SESSION] ensure_session error: {e}")
+            if attempt < max_retries - 1:
+                time.sleep(WAIT_MED)
+    
+    return False
 
-    # --- FAST PATH: kalau sudah di progress & login masih valid, jangan navigate ---
-    try:
-        cur = driver.current_url or ""
-    except Exception:
-        cur = ""
-    if PROGRESS_URL in cur:
-        page0 = _safe_page_source(driver)
-        if page0 and ("Please Login" not in page0) and ("birthChk" not in page0):
-            return True  # sudah oke, langsung pakai
 
-    # Cek halaman progress sekali
-    driver.get(PROGRESS_URL)
-    had_alert = _accept_login_alert_if_any(driver, timeout=1)
-    page = _safe_page_source(driver)
-    need_login = had_alert or ("Please Login" in page) or ("birthChk" in page)
-
-    if not need_login:
-        # sudah siap
-        return True
-
-    if not relogin_if_needed:
-        log("[SESSION] Perlu login tapi relogin_if_needed=False → gagal.")
-        return False
-
-    log("[SESSION] Need login → performing login flow...")
-    if not _do_login_flow(driver, username, password, birthday):
-        log("[SESSION] Login/verifikasi gagal.")
-        return False
-
-    _goto_progress_and_wait(driver)
-    ps = _safe_page_source(driver)
-    if not ps or ("Please Login" in ps):
-        log("[SESSION] Masih terlempar ke login → sesi tidak siap.")
-        return False
-
-    return True
-
-
-# ===== API Publik =====
 def with_session(
     user_key: str,
     username: str,
     password: str,
     birthday: str,
-    fn: Callable[[Any], Any],  # fn(driver) -> result
+    fn: Callable[[Any], Any],
     ttl_sec: Optional[int] = None,
     auto_cleanup: bool = False,
     logger_: Optional[logging.Logger] = None,
 ):
-    ttl = int(ttl_sec if ttl_sec is not None else DEFAULT_TTL_SEC)
+    """Main session handler dengan simplified logic"""
+    ttl = ttl_sec or DEFAULT_TTL_SEC
     now = time.monotonic()
-    logi = (logger_ or logger).info
-    logw = (logger_ or logger).warning
-
+    log = logger_ or logger
+    
     if auto_cleanup:
         cleanup_idle(ttl_sec=ttl, logger_=logger_)
 
+    # Get or create session
     sess = _SESS.get(user_key)
-
-    # 1) buat driver bila belum ada
     if not sess:
-        drv = _create_driver_for(profile_name=user_key)
-        sess = _Session(
-            driver=drv,
-            created_monotonic=now,
-            last_used_monotonic=now,
-            last_login_monotonic=0.0,
-        )
-        _SESS[user_key] = sess
-        logi("[SESSION] New webdriver created for key=%s", user_key)
-
-    drv = sess.driver
-
-    # 2) Force relogin bila TTL lewat (berdasarkan usia LOGIN, bukan pemakaian)
-    # 2) TTL check: cukup catat, biar ensure_session() yang tentukan perlu login
-    ttl_expired = (
-        (now - sess.last_login_monotonic) > ttl if sess.last_login_monotonic else True
-    )
-
-    try:
-        if ttl_expired:
-            logi("[SESSION] TTL lewat → akan soft-check via ensure_session()")
-            if not _do_login_flow(drv, username, password, birthday):
-                # reset & retry satu kali
-                _close_driver(user_key)
-                drv = _create_driver_for(profile_name=user_key)
-                _SESS[user_key] = _Session(
-                    driver=drv,
-                    created_monotonic=now,
-                    last_used_monotonic=now,
-                    last_login_monotonic=0.0,
-                )
-                if not _do_login_flow(drv, username, password, birthday):
-                    raise RuntimeError("Gagal relogin setelah TTL.")
-            _goto_progress_and_wait(drv)
-            _SESS[user_key].last_login_monotonic = time.monotonic()
-        else:
-            # jalur cepat: biarkan ensure_session memutuskan apakah perlu login
-            ok = ensure_session(
-                drv,
-                username=username,
-                password=password,
-                birthday=birthday,
-                relogin_if_needed=True,
-                logger_=logger_,
+        try:
+            driver = _create_driver_for(profile_name=user_key)
+            sess = _Session(
+                driver=driver,
+                created_monotonic=now,
+                last_used_monotonic=now,
+                last_login_monotonic=0.0,
             )
-            if not ok:
-                logw("[SESSION] ensure_session gagal → hard reset driver & retry")
-                _close_driver(user_key)
-                drv = _create_driver_for(profile_name=user_key)
-                _SESS[user_key] = _Session(
-                    driver=drv,
-                    created_monotonic=now,
-                    last_used_monotonic=now,
-                    last_login_monotonic=0.0,
-                )
-                ok2 = ensure_session(
-                    drv,
-                    username=username,
-                    password=password,
-                    birthday=birthday,
-                    relogin_if_needed=True,
-                    logger_=logger_,
-                )
-                if not ok2:
-                    raise RuntimeError("Gagal memastikan sesi EPS (login/verifikasi).")
-            else:
-                # berhasil TANPA login baru → jangan update last_login_monotonic
-                pass
+            _SESS[user_key] = sess
+            log.info(f"[SESSION] New session created for {user_key}")
+        except Exception as e:
+            log.error(f"[SESSION] Failed to create session: {e}")
+            raise RuntimeError(f"Gagal membuat session: {e}")
 
-    except WebDriverException as e:
-        logw("[SESSION] WebDriverException → hard reset: %s", e)
-        _close_driver(user_key)
-        drv = _create_driver_for(profile_name=user_key)
-        _SESS[user_key] = _Session(
-            driver=drv,
-            created_monotonic=now,
-            last_used_monotonic=now,
-            last_login_monotonic=0.0,
-        )
-        if not ensure_session(
-            drv,
-            username=username,
-            password=password,
-            birthday=birthday,
-            relogin_if_needed=True,
-            logger_=logger_,
-        ):
-            raise RuntimeError("Gagal memastikan sesi EPS (login/verifikasi).")
-
-    # 3) Jalankan fungsi scraping
+    driver = sess.driver
+    
+    # Check TTL and ensure session
     try:
-        result = fn(drv)
+        ttl_expired = (now - sess.last_login_monotonic) > ttl if sess.last_login_monotonic else True
+        
+        if ttl_expired:
+            log.info(f"[SESSION] TTL expired, ensuring session...")
+            if ensure_session(driver, username, password, birthday, True, log):
+                # Update login time only on successful login
+                _SESS[user_key].last_login_monotonic = time.monotonic()
+                log.info("[SESSION] Session renewed successfully")
+            else:
+                log.error("[SESSION] Failed to ensure session after TTL")
+                raise RuntimeError("Gagal memperbarui session setelah TTL")
+        else:
+            # Quick check without forced login
+            if not ensure_session(driver, username, password, birthday, False, log):
+                log.warning("[SESSION] Quick check failed, trying with login...")
+                if ensure_session(driver, username, password, birthday, True, log):
+                    _SESS[user_key].last_login_monotonic = time.monotonic()
+                else:
+                    raise RuntimeError("Gagal memastikan session")
+        
+        # Execute the function
+        result = fn(driver)
         _SESS[user_key].last_used_monotonic = time.monotonic()
+        
         return result
-    except UnexpectedAlertPresentException:
-        _accept_login_alert_if_any(drv, timeout=1)
-        if not ensure_session(
-            drv,
-            username=username,
-            password=password,
-            birthday=birthday,
-            relogin_if_needed=True,
-            logger_=logger_,
-        ):
-            raise RuntimeError("Sesi terputus saat scraping & gagal relogin.")
-        result = fn(drv)
-        _SESS[user_key].last_used_monotonic = time.monotonic()
-        return result
+        
+    except Exception as e:
+        log.error(f"[SESSION] Error in with_session: {e}")
+        # Cleanup on error
+        _close_driver(user_key)
+        raise
 
 
-# ===== Opsional: Cleanup =====
-def cleanup_idle(
-    ttl_sec: int = DEFAULT_TTL_SEC,
-    logger_: Optional[logging.Logger] = None,
-) -> int:
+def cleanup_idle(ttl_sec: int = DEFAULT_TTL_SEC, logger_: Optional[logging.Logger] = None) -> int:
+    """Cleanup idle sessions"""
     now = time.monotonic()
     to_close = [k for k, s in _SESS.items() if (now - s.last_used_monotonic) > ttl_sec]
+    
     for k in to_close:
-        try:
-            _close_driver(k)
-        except Exception:
-            pass
+        _close_driver(k)
+        
     if to_close:
-        (logger_ or logger).info(
-            "[SESSION] Cleanup: menutup %d sesi idle: %s",
-            len(to_close),
-            ", ".join(to_close),
-        )
+        (logger_ or logger).info(f"[SESSION] Cleaned up {len(to_close)} idle sessions")
+    
     return len(to_close)
 
 
 def close_all():
+    """Close all sessions"""
     for k in list(_SESS.keys()):
         _close_driver(k)
+    logger.info("[SESSION] All sessions closed")
