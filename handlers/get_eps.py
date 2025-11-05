@@ -1,8 +1,10 @@
+# get_eps.py
 import shlex
 import os
 import re
 import json
 import logging
+import asyncio
 from typing import Dict
 
 from dotenv import load_dotenv
@@ -10,10 +12,13 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 # --- EPS core (hanya yang dibutuhkan) ---
-from handlers.eps_core.session_manager import with_session
+from handlers.eps_core.session_manager import (
+    with_session_async,
+    with_session_sync_wrapper,
+)
 from handlers.eps_core.scraper import akses_progress
 from handlers.eps_core.formatter import format_data
-from handlers.eps_core.utils import normalize_birthday  # fungsi normalisasi tgl lahir
+from handlers.eps_core.utils import normalize_birthday
 
 # --- Cache utils ---
 from handlers.cache_utils import (
@@ -94,10 +99,25 @@ async def _ensure_authorized_dm(
     return True
 
 
+# handlers/get_eps.py
+
+
 async def _send_long_html(context, chat_id: int, html_text: str, limit: int = 4096):
     parts = [html_text[i : i + limit] for i in range(0, len(html_text), limit)]
     for p in parts:
-        await context.bot.send_message(chat_id=chat_id, text=p, parse_mode="HTML")
+        try:
+            await context.bot.send_message(
+                chat_id=chat_id,
+                text=p,
+                parse_mode="HTML",
+                read_timeout=60,  # Tambahkan timeout lebih lama
+                write_timeout=60,
+                connect_timeout=60,
+            )
+            await asyncio.sleep(1)  # Delay antar pesan
+        except Exception as e:
+            logger.error(f"Error sending message part: {e}")
+            # Continue dengan part berikutnya
 
 
 def _parse_args(text: str):
@@ -125,6 +145,12 @@ def _display_time_gmt7() -> str:
         return datetime.now(jkt).strftime("%Y-%m-%d %H:%M:%S %z")
 
 
+# ====== ASYNC SCRAPING FUNCTION ======
+async def _scrape_eps_data(page):
+    """Async function untuk scraping data EPS"""
+    return await akses_progress(page, prefer_row2=True)
+
+
 # ====== HANDLER UTAMA ======
 async def eps_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # DM-only + whitelist
@@ -133,7 +159,7 @@ async def eps_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     uid = update.effective_user.id
     chat_id = update.effective_chat.id
-    message_id = update.message.message_id  # Simpan message_id untuk penghapusan
+    message_id = update.message.message_id
     args = _parse_args(update.message.text)
 
     logger.info(f"\n=== 🚀 Command /eps dipanggil oleh UID={uid} ===")
@@ -167,13 +193,13 @@ async def eps_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.info(f"[{uid}] Mode: MANUAL | user={username} | bday={birthday}")
 
         try:
-            # Semua login/session via with_session (tidak bikin driver sendiri)
-            data = with_session(
+            # Gunakan async session manager
+            data = await with_session_async(
                 user_key=account_key,
                 username=username,
                 password=password,
                 birthday=birthday,
-                fn=lambda d: akses_progress(d, prefer_row2=True),
+                fn=_scrape_eps_data,  # Async function
                 ttl_sec=90 * 60,  # 90 menit
                 auto_cleanup=True,
                 logger_=logger,
@@ -197,7 +223,7 @@ async def eps_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             # HAPUS PESAN "MOHON TUNGGU" DAN PESAN COMMAND
             await _delete_wait_message()
-            await _delete_command_message()  # Hapus command di mode manual
+            await _delete_command_message()
 
             msg = format_data(data) + f"\n\n<i>⏱️ Dicek pada: {_display_time_gmt7()}</i>"
             await _send_long_html(context, uid, msg)
@@ -210,7 +236,7 @@ async def eps_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             logger.exception(f"[{uid}] EPS manual error: {e}")
             # HAPUS PESAN "MOHON TUNGGU" DAN PESAN COMMAND MESKI ERROR
             await _delete_wait_message()
-            await _delete_command_message()  # Hapus command di mode manual meski error
+            await _delete_command_message()
             await context.bot.send_message(uid, f"❌ Terjadi kesalahan: {e}")
         return
 
@@ -220,7 +246,6 @@ async def eps_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     creds = EPS_ACCOUNTS.get(uid)
     if not creds:
         await _delete_wait_message()
-        # TIDAK hapus command di mode auto
         await context.bot.send_message(
             uid, "❌ Akun EPS kamu belum terdaftar di config/eps_accounts.json."
         )
@@ -233,12 +258,13 @@ async def eps_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     account_key = username.lower()
 
     try:
-        data = with_session(
+        # Gunakan async session manager
+        data = await with_session_async(
             user_key=account_key,
             username=username,
             password=password,
             birthday=birthday,
-            fn=lambda d: akses_progress(d, prefer_row2=True),
+            fn=_scrape_eps_data,  # Async function
             ttl_sec=90 * 60,  # 90 menit
             auto_cleanup=True,
             logger_=logger,
@@ -269,7 +295,6 @@ async def eps_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # HAPUS HANYA PESAN "MOHON TUNGGU" SAJA
         await _delete_wait_message()
-        # TIDAK hapus command di mode auto
 
         msg = format_data(data, status=status)
         msg += f"\n\n<i>⏱️ Dicek pada: {_display_time_gmt7()}</i>"
@@ -284,5 +309,4 @@ async def eps_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.exception(f"[{uid}] EPS auto error: {e}")
         # HAPUS HANYA PESAN "MOHON TUNGGU" SAJA
         await _delete_wait_message()
-        # TIDAK hapus command di mode auto
         await context.bot.send_message(uid, f"❌ Terjadi kesalahan: {e}")

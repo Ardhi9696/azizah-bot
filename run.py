@@ -60,10 +60,36 @@ def jalankan_bot():
     subprocess.run([sys.executable, BOT_FILE])
 
 
+# run.py (tambahkan function ini)
+def install_playwright_browsers():
+    """Install Playwright browsers jika belum ada"""
+    print("[...] Mengecek Playwright browsers...")
+    try:
+        # Check if Chromium is installed
+        result = subprocess.run(
+            [sys.executable, "-m", "playwright", "chromium", "--version"],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            print("[...] Menginstal Playwright browsers...")
+            subprocess.check_call(
+                [sys.executable, "-m", "playwright", "install", "chromium"]
+            )
+            print("[✔] Playwright browsers terinstal.")
+        else:
+            print("[✔] Playwright browsers sudah terinstal.")
+    except subprocess.CalledProcessError:
+        print("[!] Gagal install Playwright browsers.")
+        sys.exit(1)
+
+
+# Tambahkan di main setelah install_requirements()
 if __name__ == "__main__":
     print("📦 Setup Lingkungan Bot Telegram\n" + "-" * 40)
     check_python_version()
     check_os()
     check_pip()
     install_requirements()
+    install_playwright_browsers()  # Tambahkan ini
     jalankan_bot()
