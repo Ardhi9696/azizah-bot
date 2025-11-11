@@ -1,6 +1,18 @@
 {
   "final": [
     {
+      "nation": "Myanmar",
+      "title": "Myanmar the 1th Test of proficiency in Korean(Special)  Announcement",
+      "type": "Special (CBT)",
+      "date": "2025-10-31"
+    },
+    {
+      "nation": "Indonesia",
+      "title": "Indonesia the 11th Test of proficiency in Korean(General)  Announcement",
+      "type": "General (CBT)",
+      "date": "2025-10-31"
+    },
+    {
       "nation": "Indonesia",
       "title": "Indonesia the 10th Test of proficiency in Korean(General)  Announcement",
       "type": "General (CBT)",
@@ -47,18 +59,6 @@
       "title": "Indonesia the 3th POINT_EXAM Announcement",
       "type": "General (CBT)",
       "date": "2025-08-01"
-    },
-    {
-      "nation": "Indonesia",
-      "title": "Indonesia the 2th POINT_EXAM Announcement",
-      "type": "General (CBT)",
-      "date": "2025-08-01"
-    },
-    {
-      "nation": "Nepal",
-      "title": "Nepal the 2th Test of proficiency in Korean(Special)  Announcement",
-      "type": "Special (CBT)",
-      "date": "2025-06-13"
     }
   ]
 }
