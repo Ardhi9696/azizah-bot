@@ -1,3 +1,5 @@
+#constants.py
+
 # URLs & selector
 LOGIN_URL = "https://www.eps.go.kr/eo/langMain.eo?langCD=in"
 PROGRESS_URL = (
@@ -54,4 +56,18 @@ EMOJI_MAP = {
     # baris baru:
     "Jumlah pencocokan/mediasi pekerjaan": "🔹",
     "알선 횟수": "🔹",
+}
+
+# handlers/eps_core/constants.py - TAMBAH selector alternatives
+
+SEL = {
+    "nama_ready": "table.tbl_typeA.center",
+    "nama_value": "table.tbl_typeA.center td:nth-child(2)",
+    "tables_purple": "table.tbl_typeA.purple.mt30",
+    "row_anchor": 'a[href^="javascript:fncDetailRow("]',
+    
+    # Tambahan selectors untuk fallback
+    "any_purple_table": "table.purple",
+    "any_table": "table",
+    "nama_fallback": "td:nth-child(2)"  # Fallback simple
 }

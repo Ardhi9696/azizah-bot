@@ -29,6 +29,108 @@ def normalize_birthday(value: str) -> str:
 
 # handlers/eps_core/auth.py - PERBAIKI login_with
 
+# handlers/eps_core/auth.py - TAMBAH fungsi fast
+
+async def login_with_fast(page: Page, username: str, password: str) -> bool:
+    """Fast login function dengan timeout lebih ketat"""
+    try:
+        logger.info(f"[AUTH] Fast login for user: {username}")
+
+        # Navigasi cepat
+        await page.goto(LOGIN_URL, wait_until="domcontentloaded", timeout=15000)
+
+        # Tunggu sangat singkat untuk form
+        try:
+            await page.wait_for_selector("#sKorTestNo", timeout=5000)
+        except:
+            logger.warning("[AUTH] Login form not found quickly, but continuing")
+
+        # Isi form dengan approach langsung
+        try:
+            await page.fill("#sKorTestNo", username)
+            await page.fill("#sFnrwRecvNo", password)
+            await page.click(".btn_login", timeout=3000)
+        except Exception as e:
+            logger.warning(f"[AUTH] Fast form fill warning: {e}")
+            # Fallback ke fungsi normal
+            return await login_with(page, username, password)
+
+        # Tunggu hasil login dengan timeout pendek
+        try:
+            await page.wait_for_function(
+                """
+                () => {
+                    const url = window.location.href;
+                    return url.includes('langMain.eo') || 
+                           url.includes('main') || 
+                           url.includes('progress') ||
+                           document.querySelector('table.tbl_typeA');
+                }
+                """,
+                timeout=10000
+            )
+            logger.info("[AUTH] ✅ Fast login successful")
+            return True
+        except Exception:
+            # Fallback check
+            current_url = page.url
+            if "langMain.eo" in current_url or "main" in current_url:
+                logger.info("[AUTH] ✅ Fast login successful (fallback check)")
+                return True
+            return False
+
+    except Exception as e:
+        logger.error(f"[AUTH] ❌ Fast login error: {e}")
+        return False
+
+
+async def verifikasi_tanggal_lahir_fast(page: Page, birthday_str: str) -> bool:
+    """Fast birthday verification"""
+    try:
+        logger.info("[AUTH] Fast birthday verification")
+
+        normalized_bday = normalize_birthday(birthday_str)
+
+        # Cepat cek apakah sudah perlu verification
+        page_content = await page.content()
+        if "birthChk" not in page_content and "chkBirtDt" not in page_content:
+            logger.debug("[AUTH] No birthday verification needed")
+            return True
+
+        # Isi form dengan timeout pendek
+        try:
+            await page.fill("#chkBirtDt", normalized_bday, timeout=3000)
+            await page.click("span.buttonE > button", timeout=3000)
+        except Exception as e:
+            logger.warning(f"[AUTH] Fast birthday form warning: {e}")
+
+        # Tunggu hasil dengan timeout pendek
+        try:
+            await page.wait_for_function(
+                """
+                () => {
+                    const url = window.location.href;
+                    return url.includes('langMain.eo') || 
+                           url.includes('main') || 
+                           url.includes('progress');
+                }
+                """,
+                timeout=8000
+            )
+            logger.info("[AUTH] Fast birthday verification successful")
+            return True
+        except Exception:
+            # Fallback check
+            current_url = page.url
+            if "langMain.eo" in current_url or "main" in current_url:
+                logger.info("[AUTH] Fast birthday verification successful (fallback)")
+                return True
+            return False
+
+    except Exception as e:
+        logger.error(f"[AUTH] Fast birthday verification error: {e}")
+        return False
+
 
 # handlers/eps_core/auth.py - FIX AUTH FUNDAMENTALLY
 
@@ -666,3 +768,61 @@ __all__ = [
     "login_with_retry",
     "verifikasi_tanggal_lahir_retry",
 ]
+
+# handlers/eps_core/auth.py - TAMBAH di bagian akhir
+
+async def login_with_ultra_fast(page: Page, username: str, password: str) -> bool:
+    """Ultra-fast login dengan timeout sangat ketat"""
+    try:
+        logger.info(f"[AUTH] Ultra-fast login for user: {username}")
+
+        # Navigasi super cepat
+        try:
+            await page.goto(LOGIN_URL, wait_until="domcontentloaded", timeout=10000)
+        except Exception as e:
+            logger.debug(f"[AUTH] Navigation warning: {e}")
+
+        # Isi form dengan approach langsung dan timeout sangat pendek
+        try:
+            # Langsung coba isi form tanpa waiting panjang
+            await page.fill("#sKorTestNo", username, timeout=2000)
+            await page.fill("#sFnrwRecvNo", password, timeout=2000)
+            await page.click(".btn_login", timeout=2000)
+        except Exception as e:
+            logger.warning(f"[AUTH] Ultra-fast form fill warning: {e}")
+            # Fallback ke approach normal
+            return await login_with(page, username, password)
+
+        # Tunggu hasil login dengan timeout sangat pendek
+        try:
+            await page.wait_for_function(
+                """
+                () => {
+                    const url = window.location.href;
+                    return url.includes('langMain.eo') || 
+                           url.includes('main') || 
+                           url.includes('progress') ||
+                           document.querySelector('table.tbl_typeA') ||
+                           document.querySelector('#chkBirtDt');
+                }
+                """,
+                timeout=5000  # Hanya 5 detik!
+            )
+            logger.info("[AUTH] ✅ Ultra-fast login successful")
+            return True
+        except Exception:
+            # Fallback check yang sangat cepat
+            current_url = page.url
+            page_content = await page.content()
+            
+            if ("langMain.eo" in current_url or 
+                "main" in current_url or 
+                "progress" in current_url or
+                "chkBirtDt" in page_content):
+                logger.info("[AUTH] ✅ Ultra-fast login successful (fallback check)")
+                return True
+            return False
+
+    except Exception as e:
+        logger.error(f"[AUTH] ❌ Ultra-fast login error: {e}")
+        return False

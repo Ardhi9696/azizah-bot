@@ -1,6 +1,12 @@
 {
   "final": [
     {
+      "nation": "Nepal",
+      "title": "Nepal the 2th Test of proficiency in Korean(General)  Announcement",
+      "type": "General (CBT)",
+      "date": "2025-11-12"
+    },
+    {
       "nation": "Myanmar",
       "title": "Myanmar the 1th Test of proficiency in Korean(Special)  Announcement",
       "type": "Special (CBT)",
@@ -19,46 +25,40 @@
       "date": "2025-10-20"
     },
     {
+      "nation": "Philippines",
+      "title": "Philippines the 3th POINT_EXAM Announcement",
+      "type": "General (CBT)",
+      "date": "2025-11-17"
+    },
+    {
       "nation": "Kyrgyzstan",
       "title": "Kyrgyzstan the 2th Test of proficiency in Korean(Special)  Announcement",
       "type": "Special (CBT)",
       "date": "2025-10-13"
     },
     {
+      "nation": "Mongolia",
+      "title": "Mongolia the 5th POINT_EXAM Announcement",
+      "type": "General (CBT)",
+      "date": "2025-11-14"
+    },
+    {
+      "nation": "Mongolia",
+      "title": "Mongolia the 4th POINT_EXAM Announcement",
+      "type": "General (CBT)",
+      "date": "2025-11-14"
+    },
+    {
+      "nation": "Mongolia",
+      "title": "Mongolia the 3th POINT_EXAM Announcement",
+      "type": "General (CBT)",
+      "date": "2025-11-14"
+    },
+    {
       "nation": "Pakistan",
       "title": "Pakistan the 2th POINT_EXAM Announcement",
       "type": "General (CBT)",
       "date": "2025-10-15"
-    },
-    {
-      "nation": "Pakistan",
-      "title": "Pakistan the 1th POINT_EXAM Announcement",
-      "type": "General (CBT)",
-      "date": "2025-10-15"
-    },
-    {
-      "nation": "Tajikistan",
-      "title": "Tajikistan the 3th POINT_EXAM Announcement",
-      "type": "General (CBT)",
-      "date": "2025-09-10"
-    },
-    {
-      "nation": "Indonesia",
-      "title": "Indonesia the 5th POINT_EXAM Announcement",
-      "type": "General (CBT)",
-      "date": "2025-08-01"
-    },
-    {
-      "nation": "Indonesia",
-      "title": "Indonesia the 4th POINT_EXAM Announcement",
-      "type": "General (CBT)",
-      "date": "2025-08-01"
-    },
-    {
-      "nation": "Indonesia",
-      "title": "Indonesia the 3th POINT_EXAM Announcement",
-      "type": "General (CBT)",
-      "date": "2025-08-01"
     }
   ]
 }

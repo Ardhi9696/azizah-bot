@@ -11,14 +11,14 @@ from typing import Callable, Optional, Dict, Any, Tuple
 from playwright.async_api import Page, Browser, BrowserContext, Error
 from .browser import setup_browser, close_browser_stack, safe_goto, wait_for_selectors
 from .auth import login_with, verifikasi_tanggal_lahir, normalize_birthday
-from .constants import LOGIN_URL, PROGRESS_URL
+from .constants import LOGIN_URL, PROGRESS_URL, SEL
 
 logger = logging.getLogger(__name__)
 
 # ===== OPTIMIZED CONFIGURATION =====
 DEFAULT_TTL_SEC = 30 * 60  # 30 menit
-WAIT_SHORT = 2  # Reduced from 5
-WAIT_MED = 5  # Reduced from 10
+WAIT_SHORT = 1  # Reduced from 5
+WAIT_MED = 3  # Reduced from 10
 WAIT_LONG = 10  # Reduced from 20
 MAX_RETRIES = 2  # Reduced from 3
 
@@ -36,15 +36,14 @@ class _Session:
 
 _SESS: Dict[str, _Session] = {}
 
-
-async def _quick_alert_check(page: Page) -> bool:
-    """Quick alert check dengan Playwright"""
+async def _ultra_fast_navigation(page: Page, url: str) -> bool:
+    """Ultra-fast navigation dengan timeout sangat pendek"""
     try:
-        # Playwright handle alerts secara otomatis, tapi kita cek jika ada
-        page.on("dialog", lambda dialog: dialog.accept())
+        await page.goto(url, wait_until="domcontentloaded", timeout=8000)
         return True
-    except Exception:
-        return False
+    except Exception as e:
+        logger.debug(f"[SESSION] Navigation warning to {url}: {e}")
+        return True  # Continue anyway - mungkin sudah di halaman yang benar
 
 
 async def _fast_page_check(page: Page) -> str:
@@ -85,31 +84,28 @@ async def _fast_navigation(page: Page, url: str) -> bool:
 async def _quick_login_flow(
     page: Page, username: str, password: str, birthday: str
 ) -> bool:
-    """Fast login flow dengan Playwright"""
+    """Ultra-fast login flow tanpa delay yang tidak perlu"""
     try:
-        logger.info(f"[SESSION] Quick login for {username}")
+        logger.info(f"[SESSION] Ultra-fast login for {username}")
 
-        # Step 1: Navigate to login (fast)
-        if not await _fast_navigation(page, LOGIN_URL):
+        # Step 1: Navigate to login (ultra-fast)
+        await _ultra_fast_navigation(page, LOGIN_URL)
+
+        # Step 2: Login tanpa delay
+        login_success = await login_with(page, username, password)
+        if not login_success:
             return False
 
-        await asyncio.sleep(WAIT_SHORT)
-
-        # Step 2: Login
-        if not await login_with(page, username, password):
+        # Step 3: Birthday verification tanpa delay  
+        bday_success = await verifikasi_tanggal_lahir(page, birthday)
+        if not bday_success:
             return False
 
-        await asyncio.sleep(WAIT_SHORT)
-
-        # Step 3: Birthday verification
-        if not await verifikasi_tanggal_lahir(page, birthday):
-            return False
-
-        logger.info("[SESSION] Quick login completed")
+        logger.info("[SESSION] Ultra-fast login completed")
         return True
 
     except Exception as e:
-        logger.error(f"[SESSION] Quick login error: {e}")
+        logger.error(f"[SESSION] Ultra-fast login error: {e}")
         return False
 
 
@@ -137,12 +133,6 @@ async def _quick_session_check(
         return False
 
 
-# handlers/eps_core/session_manager.py - PERBAIKI ensure_session_fast
-
-
-# handlers/eps_core/session_manager.py - TAMBAH DEBUG LOGGING
-
-
 async def ensure_session_fast(
     page: Page,
     username: str,
@@ -151,63 +141,66 @@ async def ensure_session_fast(
     force_login: bool = False,
     logger_=None,
 ) -> bool:
-    """Fast session ensure dengan comprehensive debugging"""
+    """Ultra-fast session ensure dengan minimal validation"""
     log = logger_ or logger
 
     for attempt in range(MAX_RETRIES):
         try:
-            log.info(f"[SESSION] Fast ensure attempt {attempt + 1}")
+            log.info(f"[SESSION] Ultra-fast ensure attempt {attempt + 1}")
 
-            # DEBUG: Log page state sebelum navigation
-            log.debug(f"[SESSION] Page state - closed: {page.is_closed()}")
-
-            # Quick navigation first
-            nav_success = await _fast_navigation(page, PROGRESS_URL)
-            log.debug(f"[SESSION] Navigation success: {nav_success}")
-
-            if not nav_success:
-                if force_login:
-                    login_result = await _quick_login_flow(
-                        page, username, password, birthday
-                    )
-                    log.debug(f"[SESSION] Login result: {login_result}")
-                    return login_result
+            # Validasi page state fundamental saja
+            if page.is_closed():
+                log.error("[SESSION] Page is closed, cannot ensure session")
                 return False
 
-            # Quick page check
+            # Navigasi ke PROGRESS_URL dengan timeout sangat pendek
+            log.debug(f"[SESSION] Ultra-fast navigation to: {PROGRESS_URL}")
+            await _ultra_fast_navigation(page, PROGRESS_URL)
+
+            # SUPER FAST VALIDATION - Cuma 2 detik total
+            validation_passed = False
+            
+            # Coba quick check untuk tabel purple (selector paling reliable)
             try:
+                await page.wait_for_selector("table.tbl_typeA.purple.mt30", timeout=2000)
+                log.debug("[SESSION] Purple tables found - session valid")
+                validation_passed = True
+            except Exception:
+                log.debug("[SESSION] Purple tables not found quickly, checking page state...")
+
+            # Jika validation gagal, cek apakah perlu login
+            if not validation_passed:
+                current_url = page.url
                 page_content = await page.content()
+                
                 need_login = (
-                    force_login
-                    or "Please Login" in page_content
-                    or "birthChk" in page_content
+                    "Please Login" in page_content 
+                    or "sKorTestNo" in page_content
+                    or "login" in current_url.lower()
+                    or "langMain" in current_url
                 )
-                log.debug(f"[SESSION] Need login: {need_login}")
 
-                if not need_login:
-                    log.info("[SESSION] Session valid (fast check)")
-                    return True
-            except Exception as e:
-                log.warning(f"[SESSION] Page content check failed: {e}")
-                need_login = True
+                if need_login or force_login:
+                    log.info("[SESSION] Login required, authenticating...")
+                    login_result = await _quick_login_flow(page, username, password, birthday)
+                    if login_result:
+                        # Setelah login success, navigasi ke progress page
+                        await _ultra_fast_navigation(page, PROGRESS_URL)
+                        return True
+                    return False
 
-            # Quick login
-            login_result = await _quick_login_flow(page, username, password, birthday)
-            log.debug(f"[SESSION] Quick login result: {login_result}")
+                # Jika tidak perlu login, anggap valid meski selector tidak ketemu
+                log.warning("[SESSION] No login required, assuming session valid")
+                validation_passed = True
 
-            if login_result:
-                log.info("[SESSION] Quick login successful")
-                return True
-
-            log.warning(f"[SESSION] Fast attempt {attempt + 1} failed")
+            return validation_passed
 
         except Exception as e:
-            log.error(f"[SESSION] Fast ensure error: {e}")
-            log.debug(f"[SESSION] Page closed after error: {page.is_closed()}")
-
-        if attempt < MAX_RETRIES - 1:
-            log.debug(f"[SESSION] Waiting {WAIT_SHORT}s before retry...")
-            await asyncio.sleep(WAIT_SHORT)
+            log.error(f"[SESSION] Ultra-fast ensure error: {e}")
+            if attempt < MAX_RETRIES - 1:
+                await asyncio.sleep(WAIT_SHORT)
+                continue
+            return False
 
     return False
 
@@ -281,32 +274,25 @@ async def with_session_fast(
     auto_cleanup: bool = True,
     logger_=None,
 ):
-    """Optimized session handler dengan Playwright - FIXED"""
+    """Optimized session handler dengan ultra-fast validation"""
     ttl = ttl_sec or DEFAULT_TTL_SEC
     now = time.monotonic()
     log = logger_ or logger
 
-    # Cleanup sessions
-    await cleanup_idle_fast(ttl_sec=3600, logger_=logger_)
-    await cleanup_old_sessions(age_seconds=3600, logger_=logger_)
-
-    # Get or create session - DENGAN VALIDATION
+    # Cleanup sessions (async - tidak blocking)
+    cleanup_task = asyncio.create_task(cleanup_idle_fast(ttl_sec=3600, logger_=logger_))
+    
+    # Get or create session
     sess = _SESS.get(user_key)
-
-    # Validasi session sebelum digunakan
+    
     if sess and await _is_session_valid(sess):
         log.info(f"[SESSION] Using existing session for {user_key}")
     else:
-        # Session tidak valid, buat baru
         if sess:
-            log.warning(
-                f"[SESSION] Existing session invalid, creating new one for {user_key}"
-            )
+            log.warning(f"[SESSION] Existing session invalid, creating new one for {user_key}")
             await _close_browser_fast(user_key)
-
+        
         try:
-            from .browser import setup_browser
-
             browser, context, page = await setup_browser(profile_name=user_key)
             sess = _Session(
                 page=page,
@@ -323,46 +309,34 @@ async def with_session_fast(
             log.error(f"[SESSION] Creation failed: {e}")
             raise RuntimeError(f"Gagal membuat session: {e}")
 
-    # Force login logic
+    # Force login logic - simplified
     session_age = now - sess.created_monotonic
-    ttl_expired = (
-        (now - sess.last_login_monotonic) > ttl if sess.last_login_monotonic else True
+    force_login = (
+        not sess.is_authenticated or 
+        session_age > 2700 or
+        (sess.last_login_monotonic and (now - sess.last_login_monotonic) > ttl)
     )
-    force_login = ttl_expired or session_age > 2700 or not sess.is_authenticated
 
-    log.info(
-        f"[SESSION] TTL check: expired={ttl_expired}, session_age={session_age:.0f}s, authenticated={sess.is_authenticated}"
-    )
+    log.info(f"[SESSION] Force login: {force_login}, session_age: {session_age:.0f}s")
 
     try:
-        # Validasi session lagi sebelum ensure
-        if not await _is_session_valid(sess):
-            log.error("[SESSION] Session became invalid before ensure")
-            await _close_browser_fast(user_key)
-            raise RuntimeError("Session invalid")
-
-        # Ensure session dengan force login jika perlu
-        if await ensure_session_fast(
-            sess.page, username, password, birthday, force_login, log
-        ):
+        # Ultra-fast session ensure
+        if await ensure_session_fast(sess.page, username, password, birthday, force_login, log):
             _SESS[user_key].last_login_monotonic = time.monotonic()
             _SESS[user_key].is_authenticated = True
             _SESS[user_key].last_used_monotonic = time.monotonic()
-            log.info("[SESSION] Session ensured")
+            log.info("[SESSION] Session ensured (ultra-fast)")
         else:
             log.error("[SESSION] Ensure failed")
             await _close_browser_fast(user_key)
             raise RuntimeError("Gagal memastikan session")
 
-        # Validasi session sebelum execute function
-        if not await _is_session_valid(sess):
-            log.error("[SESSION] Session became invalid before function execution")
-            await _close_browser_fast(user_key)
-            raise RuntimeError("Session invalid")
-
         # Execute function
         result = await fn(sess.page)
         _SESS[user_key].last_used_monotonic = time.monotonic()
+
+        # Tunggu cleanup task selesai
+        await cleanup_task
 
         return result
 
@@ -370,7 +344,6 @@ async def with_session_fast(
         log.error(f"[SESSION] Session error: {e}")
         await _close_browser_fast(user_key)
         raise
-
 
 async def _is_session_valid(sess: _Session) -> bool:
     """Check if session is still valid"""

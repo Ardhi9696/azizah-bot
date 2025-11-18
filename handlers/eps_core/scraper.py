@@ -1,5 +1,7 @@
 # handlers/eps_core/scraper.py
 
+# handlers/eps_core/scraper.py
+
 import asyncio
 import logging
 from bs4 import BeautifulSoup
@@ -18,120 +20,323 @@ from .navigator import _try_select_row2, _switch_to_ref
 
 logger = logging.getLogger(__name__)
 
+# TAMBAHKAN FUNGSI INI DI AWAL FILE
+def _create_error_result(error_msg: str) -> dict:
+    """Create error result structure"""
+    return {
+        "nama": "-",
+        "aktif_ref_id": None,
+        "pengiriman": {
+            "no": "-",
+            "ref_id": None,
+            "tanggal_kirim": "-",
+            "tanggal_terima": "-",
+        },
+        "pengiriman_list": [],
+        "riwayat": [],
+        "tautan_pekerjaan": {},
+        "error": error_msg,
+    }
+
+# TAMBAHKAN FUNGSI wait_for_selectors JIKA BELUM ADA
+async def wait_for_selectors(page: Page, selectors: list, timeout: int = 10000) -> bool:
+    """
+    Wait for multiple selectors (coba satu per satu)
+    """
+    for selector in selectors:
+        try:
+            await page.wait_for_selector(selector, timeout=timeout)
+            return True
+        except Exception:
+            continue
+    return False
 
 async def akses_progress(page: Page, prefer_row2: bool = True) -> dict:
-    """
-    Akses halaman progress EPS dengan Playwright
-
-    Args:
-        page: Playwright page object
-        prefer_row2: Whether to automatically select row 2
-
-    Returns:
-        Dictionary dengan data yang di-scrape
-    """
+    """Akses halaman progress EPS dengan approach yang lebih reliable"""
     try:
-        logger.info("[SCRAPER] Mengakses halaman progress...")
+        logger.info("[SCRAPER] Starting progress page access...")
+        
+        # Validasi dasar page state
+        if page.is_closed():
+            logger.error("[SCRAPER] Page is closed, cannot scrape")
+            return _create_error_result("Page closed")
 
-        # Navigate ke halaman progress
-        await page.goto(PROGRESS_URL, wait_until="domcontentloaded", timeout=30000)
+        # Navigasi ke halaman progress
+        await _navigate_to_progress_page(page)
+        
+        # Tunggu halaman siap dengan timeout yang reasonable
+        if not await _wait_for_page_ready(page):
+            logger.error("[SCRAPER] Progress page not ready after navigation")
+            return _create_error_result("Progress page not ready")
 
-        # Tunggu sampai tabel nama ready
-        await page.wait_for_selector(SEL["nama_ready"], timeout=15000)
-        logger.debug("[SCRAPER] Halaman progress loaded")
-
-        aktif_ref_id = None
-        if prefer_row2:
-            try:
-                logger.debug("[SCRAPER] Mencoba select row 2...")
-                aktif_ref_id = await _try_select_row2(page)
-                if aktif_ref_id:
-                    logger.info(
-                        f"[SCRAPER] Berhasil select row 2 dengan ref_id: {aktif_ref_id}"
-                    )
-                else:
-                    logger.warning(
-                        "[SCRAPER] Gagal select row 2, melanjutkan tanpa selection"
-                    )
-            except Exception as e:
-                logger.warning(f"[SCRAPER] Error saat select row 2: {e}")
-                aktif_ref_id = None
-
-        # Ambil konten halaman untuk parsing
+        # EKSEKUSI SEQUENTIAL - hindari race conditions
+        # 1. Ambil content dasar terlebih dahulu
         page_content = await page.content()
         soup = BeautifulSoup(page_content, "lxml")
-        logger.debug("[SCRAPER] Page content diambil untuk parsing")
+        
+        # 2. Parse data dasar sebelum manipulasi apapun
+        parsed_data = await _parse_initial_page_content(soup)
+        
+        # 3. Select row 2 JIKA prefer_row2=True dan row 2 ada
+        aktif_ref_id = None
+        if prefer_row2 and await _is_row2_available(page):
+            try:
+                logger.debug("[SCRAPER] Attempting to select row 2...")
+                aktif_ref_id = await _try_select_row2(page)
+                if aktif_ref_id:
+                    logger.info(f"[SCRAPER] Successfully selected row 2: {aktif_ref_id}")
+                    # Setelah select row 2, ambil content baru
+                    await asyncio.sleep(2)  # Tunggu update
+                    page_content = await page.content()
+                    soup = BeautifulSoup(page_content, "lxml")
+                    # Parse ulang data dengan content yang updated
+                    parsed_data = await _parse_initial_page_content(soup)
+            except Exception as e:
+                logger.warning(f"[SCRAPER] Row selection error: {e}")
 
-        # Parse data nama
-        nama_el = soup.select_one(SEL["nama_value"])
-        nama = nama_el.get_text(strip=True) if nama_el else "-"
-        logger.info(f"[SCRAPER] Nama ditemukan: {nama}")
+        # 4. Process mediasi data dengan approach yang lebih reliable
+        await _process_mediasi_data_reliable(page, parsed_data["pengiriman_list"], aktif_ref_id)
 
-        # Parse tabel-tabel purple
-        purple_tables = soup.select(SEL["tables_purple"])
-        logger.debug(f"[SCRAPER] Jumlah tabel purple ditemukan: {len(purple_tables)}")
-
-        pengiriman_list = []
-        riwayat = []
-        job_links = {}
-
-        if purple_tables:
-            # Parse tabel pengiriman (biasanya tabel pertama)
-            pengiriman_list = parse_pengiriman_table(purple_tables[0])
-            logger.debug(f"[SCRAPER] Jumlah entri pengiriman: {len(pengiriman_list)}")
-
-            # Parse riwayat progres (biasanya tabel kedua)
-            if len(purple_tables) >= 2:
-                riwayat = parse_riwayat_table(purple_tables[1])
-                job_links = extract_job_links(purple_tables[1])
-                logger.debug(f"[SCRAPER] Jumlah riwayat: {len(riwayat)}")
-                logger.debug(f"[SCRAPER] Job links: {len(job_links)}")
-
-        # Cari pengiriman terbaru
-        pengiriman_latest = pick_latest(pengiriman_list)
-
-        # Jika tidak ada aktif_ref_id dari row2, gunakan dari pengiriman terbaru
-        if not aktif_ref_id and pengiriman_latest:
-            aktif_ref_id = pengiriman_latest.get("ref_id")
-            logger.debug(
-                f"[SCRAPER] Menggunakan ref_id dari pengiriman terbaru: {aktif_ref_id}"
-            )
-
-        # Process mediasi untuk setiap roster
-        await _process_mediasi_data(page, pengiriman_list, aktif_ref_id, riwayat)
-
-        # Format pengiriman header
-        pengiriman_header = _format_pengiriman_header(pengiriman_latest)
+        # Siapkan result final
+        pengiriman_latest = pick_latest(parsed_data["pengiriman_list"])
+        default_ref_id = pengiriman_latest.get("ref_id") if pengiriman_latest else None
 
         result = {
-            "nama": nama,
-            "aktif_ref_id": aktif_ref_id,
-            "pengiriman": pengiriman_header,
-            "pengiriman_list": pengiriman_list,
-            "riwayat": riwayat,
-            "tautan_pekerjaan": job_links,
+            "nama": parsed_data["nama"],
+            "aktif_ref_id": aktif_ref_id or default_ref_id,
+            "pengiriman": _format_pengiriman_header(pengiriman_latest),
+            "pengiriman_list": parsed_data["pengiriman_list"],
+            "riwayat": parsed_data["riwayat"],
+            "tautan_pekerjaan": parsed_data["job_links"],
         }
 
         logger.info("[SCRAPER] Scraping completed successfully")
         return result
 
     except Exception as e:
-        logger.error(f"[SCRAPER] Error saat akses progress: {e}")
-        # Return empty structure dengan error indicator
-        return {
-            "nama": "-",
-            "aktif_ref_id": None,
-            "pengiriman": {
-                "no": "-",
-                "ref_id": None,
-                "tanggal_kirim": "-",
-                "tanggal_terima": "-",
-            },
-            "pengiriman_list": [],
-            "riwayat": [],
-            "tautan_pekerjaan": {},
-            "error": str(e),
-        }
+        logger.error(f"[SCRAPER] Error during progress access: {e}")
+        return _create_error_result(str(e))
+
+
+async def _is_row2_available(page: Page) -> bool:
+    """Cek apakah row 2 tersedia untuk di-select"""
+    try:
+        row_anchor = await page.query_selector(f"{SEL['row_anchor']}:has-text('2')")
+        return row_anchor is not None
+    except Exception:
+        return False
+
+
+async def _parse_initial_page_content(soup: BeautifulSoup) -> dict:
+    """Parse semua data dari HTML content tanpa manipulasi state"""
+    
+    # Parse nama
+    nama = _extract_nama(soup)
+    
+    # Parse tabel
+    purple_tables = _find_purple_tables(soup)
+    logger.debug(f"[SCRAPER] Found {len(purple_tables)} purple tables")
+    
+    # Parse data dari tabel
+    pengiriman_list = _parse_pengiriman_table(purple_tables)
+    riwayat, job_links = _parse_riwayat_table(purple_tables)
+    
+    return {
+        "nama": nama,
+        "pengiriman_list": pengiriman_list,
+        "riwayat": riwayat,
+        "job_links": job_links,
+    }
+
+
+async def _process_mediasi_data_reliable(page: Page, pengiriman_list: list, aktif_ref_id: Optional[str]) -> None:
+    """Process data mediasi dengan approach yang lebih reliable - FIXED VERSION"""
+    try:
+        logger.info("[SCRAPER] Processing mediasi data reliably...")
+        
+        # Jika tidak ada pengiriman list, skip
+        if not pengiriman_list:
+            return
+
+        # Reset semua mediasi ke "-" terlebih dahulu
+        for item in pengiriman_list:
+            item["mediasi"] = "-"
+
+        # Untuk roster aktif (jika ada), gunakan data dari halaman saat ini
+        if aktif_ref_id:
+            current_riwayat = await _get_current_riwayat(page)
+            mediasi_aktif = extract_mediasi_from_riwayat(current_riwayat)
+            logger.info(f"[SCRAPER] Mediasi aktif: {mediasi_aktif} untuk ref: {aktif_ref_id}")
+            
+            for item in pengiriman_list:
+                if item.get("ref_id") == aktif_ref_id:
+                    item["mediasi"] = mediasi_aktif
+                    logger.info(f"[SCRAPER] Set mediasi {mediasi_aktif} untuk roster aktif {item.get('no')}")
+
+        # Untuk roster lain, kita perlu switch dan ambil data
+        for item in pengiriman_list:
+            ref_id = item.get("ref_id")
+            # Skip jika sudah di-set atau tidak ada ref_id
+            if not ref_id or item["mediasi"] != "-":
+                continue
+                
+            # Skip jika ini adalah roster aktif (sudah di-handle di atas)
+            if ref_id == aktif_ref_id:
+                continue
+                
+            logger.info(f"[SCRAPER] Processing mediasi untuk roster {item.get('no')} dengan ref: {ref_id}")
+            
+            # Simpan state current URL sebelum switch
+            current_url = page.url
+            
+            # Switch ke roster
+            if await _switch_to_ref(page, ref_id):
+                # Tunggu lebih lama untuk memastikan halaman update
+                await asyncio.sleep(3)
+                
+                # Ambil data riwayat yang baru
+                current_riwayat = await _get_current_riwayat(page)
+                item["mediasi"] = extract_mediasi_from_riwayat(current_riwayat)
+                logger.info(f"[SCRAPER] Mediasi untuk roster {item.get('no')}: {item['mediasi']}")
+                
+                # KEMBALI ke halaman asal (sangat penting!)
+                await page.goto(current_url, wait_until="domcontentloaded", timeout=15000)
+                await asyncio.sleep(2)  # Tunggu navigasi kembali
+            else:
+                logger.warning(f"[SCRAPER] Gagal switch ke ref {ref_id}")
+
+    except Exception as e:
+        logger.error(f"[SCRAPER] Error processing mediasi data: {e}")
+
+
+async def _get_current_riwayat(page: Page) -> list:
+    """Ambil data riwayat dari halaman saat ini"""
+    try:
+        page_content = await page.content()
+        soup = BeautifulSoup(page_content, "lxml")
+        purple_tables = _find_purple_tables(soup)
+        
+        if len(purple_tables) >= 2:
+            return parse_riwayat_table(purple_tables[1])
+        return []
+    except Exception as e:
+        logger.error(f"[SCRAPER] Error getting current riwayat: {e}")
+        return []
+
+
+# Fungsi-fungsi helper lainnya tetap sama seperti sebelumnya...
+def _extract_nama(soup: BeautifulSoup) -> str:
+    """Extract nama dari berbagai possible selector"""
+    nama_selectors = [
+        SEL["nama_value"],
+        "table.tbl_typeA.center td:nth-child(2)",
+        "table.tbl_typeA td:nth-child(2)",
+    ]
+    
+    for selector in nama_selectors:
+        try:
+            nama_el = soup.select_one(selector)
+            if nama_el:
+                nama_text = nama_el.get_text(strip=True)
+                if nama_text and nama_text != "-":
+                    logger.info(f"[SCRAPER] Nama ditemukan: {nama_text}")
+                    return nama_text
+        except Exception as e:
+            logger.debug(f"[SCRAPER] Nama selector {selector} failed: {e}")
+            continue
+    
+    return "-"
+
+
+def _find_purple_tables(soup: BeautifulSoup) -> list:
+    """Cari purple tables dengan berbagai fallback"""
+    tables = soup.select(SEL["tables_purple"])
+    if not tables:
+        tables = soup.select("table.purple")
+    if not tables:
+        tables = soup.select("table")
+    return tables
+
+
+def _parse_pengiriman_table(purple_tables: list) -> list:
+    """Parse tabel pengiriman dari purple tables"""
+    if not purple_tables or len(purple_tables) < 1:
+        return []
+    
+    pengiriman_list = parse_pengiriman_table(purple_tables[0])
+    logger.debug(f"[SCRAPER] Pengiriman entries: {len(pengiriman_list)}")
+    return pengiriman_list
+
+
+def _parse_riwayat_table(purple_tables: list) -> tuple:
+    """Parse tabel riwayat dan job links dari purple tables"""
+    if not purple_tables or len(purple_tables) < 2:
+        return [], {}
+    
+    riwayat = parse_riwayat_table(purple_tables[1])
+    job_links = extract_job_links(purple_tables[1])
+    logger.debug(f"[SCRAPER] Riwayat entries: {len(riwayat)}, Job links: {len(job_links)}")
+    return riwayat, job_links
+
+
+async def _navigate_to_progress_page(page: Page) -> None:
+    """Handle navigation ke halaman progress"""
+    current_url = page.url
+    
+    if PROGRESS_URL not in current_url:
+        logger.debug("[SCRAPER] Navigating to progress page...")
+        await page.goto(PROGRESS_URL, wait_until="domcontentloaded", timeout=20000)
+    else:
+        logger.debug("[SCRAPER] Already on progress page, quick reload...")
+        await page.reload(wait_until="domcontentloaded", timeout=15000)
+
+
+async def _wait_for_page_ready(page: Page) -> bool:
+    """Tunggu sampai halaman progress ready dengan timeout reasonable"""
+    selectors_to_check = [
+        SEL["tables_purple"],
+        "table.tbl_typeA.purple",
+        "table.tbl_typeA",
+        "table"
+    ]
+    
+    for selector in selectors_to_check:
+        try:
+            await page.wait_for_selector(selector, timeout=5000)
+            logger.debug(f"[SCRAPER] Page ready - found: {selector}")
+            return True
+        except Exception:
+            continue
+    
+    # Fallback: cek ada tabel apapun
+    try:
+        tables = await page.query_selector_all("table")
+        if tables:
+            logger.debug(f"[SCRAPER] Found {len(tables)} tables as fallback")
+            return True
+    except Exception as e:
+        logger.debug(f"[SCRAPER] Fallback table check failed: {e}")
+    
+    return False
+
+
+def _create_error_result(error_msg: str) -> dict:
+    """Create standardized error result"""
+    return {
+        "nama": "-",
+        "aktif_ref_id": None,
+        "pengiriman": {
+            "no": "-",
+            "ref_id": None,
+            "tanggal_kirim": "-",
+            "tanggal_terima": "-",
+        },
+        "pengiriman_list": [],
+        "riwayat": [],
+        "tautan_pekerjaan": {},
+        "error": error_msg,
+    }
+
 
 
 async def _process_mediasi_data(

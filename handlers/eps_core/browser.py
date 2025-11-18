@@ -450,24 +450,30 @@ async def close_browser_stack(browser: Browser):
         logger.debug(f"Error closing browser: {e}")
 
 
+# handlers/eps_core/browser.py - PERBAIKI safe_goto
+
 async def safe_goto(page: Page, url: str, timeout: int = 30000) -> bool:
     """
-    Safe navigation dengan error handling
-
-    Args:
-        page: Page object
-        url: URL tujuan
-        timeout: Timeout dalam milliseconds
-
-    Returns:
-        True jika berhasil, False jika gagal
+    Safe navigation dengan improved error handling
     """
     try:
+        # Gunakan approach yang lebih tolerant
         await page.goto(url, wait_until="domcontentloaded", timeout=timeout)
+        
+        # Tunggu dengan timeout yang lebih pendek untuk ready state
+        try:
+            await page.wait_for_function(
+                "document.readyState === 'complete'", 
+                timeout=5000
+            )
+        except:
+            logger.debug("[BROWSER] Ready state timeout, continuing anyway")
+            
         return True
     except Exception as e:
-        logger.warning(f"Navigation to {url} failed: {e}")
-        return False
+        logger.warning(f"[BROWSER] Navigation to {url} had issues: {e}")
+        # Return true anyway untuk kasus timeout partial
+        return "timeout" in str(e).lower()
 
 
 async def wait_for_selectors(page: Page, selectors: list, timeout: int = 10000) -> bool:
