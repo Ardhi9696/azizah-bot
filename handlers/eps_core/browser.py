@@ -168,7 +168,9 @@ class BrowserFactory:
 
             # Launch options - Playwright tidak butuh user_data_dir di sini
             launch_options = {
-                "headless": self._get_bool_env("HEADLESS", self.config.HEADLESS_DEFAULT),
+                "headless": self._get_bool_env(
+                    "HEADLESS", self.config.HEADLESS_DEFAULT
+                ),
                 "args": self.platform_config["launch_args"],
             }
 
@@ -308,7 +310,9 @@ class BrowserFactory:
 
         logger.info(f"Context pool initialized (size={created})")
 
-    async def acquire_context(self, browser: Browser, profile_name: Optional[str] = None) -> BrowserContext:
+    async def acquire_context(
+        self, browser: Browser, profile_name: Optional[str] = None
+    ) -> BrowserContext:
         """Acquire a BrowserContext from the pool or create a new one if empty."""
         # Ensure pool exists
         try:
@@ -337,7 +341,9 @@ class BrowserFactory:
             try:
                 pages = ctx.pages
                 if pages:
-                    logger.debug(f"[POOL] Found {len(pages)} leftover pages in context, closing them")
+                    logger.debug(
+                        f"[POOL] Found {len(pages)} leftover pages in context, closing them"
+                    )
                     for p in list(pages):
                         try:
                             if not p.is_closed():
@@ -384,7 +390,9 @@ class BrowserFactory:
                             pass
             except Exception:
                 # If introspection fails, prefer closing and not returning to pool
-                logger.debug("[POOL] Could not inspect pages during release; closing context")
+                logger.debug(
+                    "[POOL] Could not inspect pages during release; closing context"
+                )
                 await context.close()
                 return
 
@@ -521,25 +529,30 @@ async def setup_browser(
         # Acquire context from pool (or create one)
         context = await factory.acquire_context(browser, profile_name)
 
-
         # Create page for this context
         page = await factory._create_page(context)
 
         # If the page was closed immediately for some reason, try a couple of fallbacks
         if page.is_closed():
-            logger.warning("[BROWSER] Page closed immediately after creation, trying a fresh page")
+            logger.warning(
+                "[BROWSER] Page closed immediately after creation, trying a fresh page"
+            )
             try:
                 page = await context.new_page()
                 await factory._apply_stealth_modifications(page)
             except Exception:
                 # Try acquiring a fresh context from the pool (or create one)
                 try:
-                    logger.warning("[BROWSER] Creating fresh context due to closed page")
+                    logger.warning(
+                        "[BROWSER] Creating fresh context due to closed page"
+                    )
                     # attempt to acquire another context
                     context = await factory.acquire_context(browser, profile_name)
                     page = await factory._create_page(context)
                 except Exception as inner_e:
-                    logger.error(f"[BROWSER] Fresh context/page attempt failed: {inner_e}")
+                    logger.error(
+                        f"[BROWSER] Fresh context/page attempt failed: {inner_e}"
+                    )
                     raise Exception("Page closed after creation")
 
         # Additional stability checks
@@ -554,7 +567,7 @@ async def setup_browser(
         # can cause other sessions to lose their pages). Close only context/page
         # created in this function, if any.
         try:
-            if 'page' in locals() and page and not page.is_closed():
+            if "page" in locals() and page and not page.is_closed():
                 try:
                     await page.close()
                 except Exception:
@@ -563,7 +576,7 @@ async def setup_browser(
             pass
 
         try:
-            if 'context' in locals() and context:
+            if "context" in locals() and context:
                 try:
                     await context.close()
                 except Exception:
@@ -691,6 +704,7 @@ async def close_browser_stack(browser: Browser):
 
 # handlers/eps_core/browser.py - PERBAIKI safe_goto
 
+
 async def safe_goto(page: Page, url: str, timeout: int = 30000) -> bool:
     """
     Safe navigation dengan improved error handling
@@ -698,16 +712,15 @@ async def safe_goto(page: Page, url: str, timeout: int = 30000) -> bool:
     try:
         # Gunakan approach yang lebih tolerant
         await page.goto(url, wait_until="domcontentloaded", timeout=timeout)
-        
+
         # Tunggu dengan timeout yang lebih pendek untuk ready state
         try:
             await page.wait_for_function(
-                "document.readyState === 'complete'", 
-                timeout=5000
+                "document.readyState === 'complete'", timeout=5000
             )
         except:
             logger.debug("[BROWSER] Ready state timeout, continuing anyway")
-            
+
         return True
     except Exception as e:
         logger.warning(f"[BROWSER] Navigation to {url} had issues: {e}")

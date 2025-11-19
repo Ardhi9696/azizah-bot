@@ -31,6 +31,7 @@ def normalize_birthday(value: str) -> str:
 
 # handlers/eps_core/auth.py - TAMBAH fungsi fast
 
+
 async def login_with_fast(page: Page, username: str, password: str) -> bool:
     """Fast login function dengan timeout lebih ketat"""
     try:
@@ -67,7 +68,7 @@ async def login_with_fast(page: Page, username: str, password: str) -> bool:
                            document.querySelector('table.tbl_typeA');
                 }
                 """,
-                timeout=10000
+                timeout=10000,
             )
             logger.info("[AUTH] ✅ Fast login successful")
             return True
@@ -115,7 +116,7 @@ async def verifikasi_tanggal_lahir_fast(page: Page, birthday_str: str) -> bool:
                            url.includes('progress');
                 }
                 """,
-                timeout=8000
+                timeout=8000,
             )
             logger.info("[AUTH] Fast birthday verification successful")
             return True
@@ -185,7 +186,9 @@ async def login_with(page: Page, username: str, password: str) -> bool:
         # Helper: try to find a selector on page or in any frame
         async def _find_selector_anywhere(selector: str, timeout: int = 3000):
             try:
-                el = await page.wait_for_selector(selector, timeout=timeout, state="visible")
+                el = await page.wait_for_selector(
+                    selector, timeout=timeout, state="visible"
+                )
                 if el:
                     return el
             except Exception:
@@ -195,7 +198,9 @@ async def login_with(page: Page, username: str, password: str) -> bool:
             try:
                 for f in page.frames:
                     try:
-                        el = await f.wait_for_selector(selector, timeout=timeout, state="visible")
+                        el = await f.wait_for_selector(
+                            selector, timeout=timeout, state="visible"
+                        )
                         if el:
                             return el
                     except Exception:
@@ -204,7 +209,6 @@ async def login_with(page: Page, username: str, password: str) -> bool:
                 pass
 
             return None
-
 
         # STRATEGY 1: Cari fields by specific EPS selectors
         username_filled = False
@@ -335,13 +339,17 @@ async def _fill_password_field(page: Page, password: str) -> bool:
             # Try to find password selector in page or frames
             element = None
             try:
-                element = await page.wait_for_selector(selector, timeout=2000, state="visible")
+                element = await page.wait_for_selector(
+                    selector, timeout=2000, state="visible"
+                )
             except Exception:
                 # Try frames
                 try:
                     for f in page.frames:
                         try:
-                            element = await f.wait_for_selector(selector, timeout=2000, state="visible")
+                            element = await f.wait_for_selector(
+                                selector, timeout=2000, state="visible"
+                            )
                             if element:
                                 break
                         except Exception:
@@ -405,7 +413,9 @@ async def _click_login_button(page: Page) -> bool:
             except Exception:
                 # try evaluate
                 try:
-                    await page.evaluate("() => { if (typeof fncLogin === 'function') fncLogin(); }")
+                    await page.evaluate(
+                        "() => { if (typeof fncLogin === 'function') fncLogin(); }"
+                    )
                     logger.info("[AUTH] Login triggered via fncLogin() evaluate")
                     return True
                 except Exception:
@@ -413,7 +423,9 @@ async def _click_login_button(page: Page) -> bool:
 
         # As last resort, try calling fncLogin directly
         try:
-            await page.evaluate("() => { if (typeof fncLogin === 'function') fncLogin(); }")
+            await page.evaluate(
+                "() => { if (typeof fncLogin === 'function') fncLogin(); }"
+            )
             logger.info("[AUTH] Login triggered via fncLogin() evaluate (last resort)")
             return True
         except Exception:
@@ -838,6 +850,7 @@ __all__ = [
 
 # handlers/eps_core/auth.py - TAMBAH di bagian akhir
 
+
 async def login_with_ultra_fast(page: Page, username: str, password: str) -> bool:
     """Ultra-fast login dengan timeout sangat ketat"""
     try:
@@ -873,7 +886,7 @@ async def login_with_ultra_fast(page: Page, username: str, password: str) -> boo
                            document.querySelector('#chkBirtDt');
                 }
                 """,
-                timeout=5000  # Hanya 5 detik!
+                timeout=5000,  # Hanya 5 detik!
             )
             logger.info("[AUTH] ✅ Ultra-fast login successful")
             return True
@@ -881,11 +894,13 @@ async def login_with_ultra_fast(page: Page, username: str, password: str) -> boo
             # Fallback check yang sangat cepat
             current_url = page.url
             page_content = await page.content()
-            
-            if ("langMain.eo" in current_url or 
-                "main" in current_url or 
-                "progress" in current_url or
-                "chkBirtDt" in page_content):
+
+            if (
+                "langMain.eo" in current_url
+                or "main" in current_url
+                or "progress" in current_url
+                or "chkBirtDt" in page_content
+            ):
                 logger.info("[AUTH] ✅ Ultra-fast login successful (fallback check)")
                 return True
             return False

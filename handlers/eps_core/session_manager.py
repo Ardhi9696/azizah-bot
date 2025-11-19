@@ -42,6 +42,7 @@ class _Session:
 
 _SESS: Dict[str, _Session] = {}
 
+
 async def _ultra_fast_navigation(page: Page, url: str) -> bool:
     """Ultra-fast navigation dengan timeout sangat pendek"""
     try:
@@ -102,7 +103,9 @@ async def _quick_login_flow(
             page_closed = True
             page_url = "<unknown>"
 
-        logger.debug(f"[AUTH-DEBUG] before login: page.is_closed={page_closed}, url={page_url}")
+        logger.debug(
+            f"[AUTH-DEBUG] before login: page.is_closed={page_closed}, url={page_url}"
+        )
 
         # Step 1: Navigate to login (ultra-fast)
         await _ultra_fast_navigation(page, LOGIN_URL)
@@ -117,7 +120,7 @@ async def _quick_login_flow(
         if not login_success:
             return False
 
-        # Step 3: Birthday verification tanpa delay  
+        # Step 3: Birthday verification tanpa delay
         bday_success = await verifikasi_tanggal_lahir(page, birthday)
         if not bday_success:
             return False
@@ -180,22 +183,26 @@ async def ensure_session_fast(
 
             # SUPER FAST VALIDATION - Cuma 2 detik total
             validation_passed = False
-            
+
             # Coba quick check untuk tabel purple (selector paling reliable)
             try:
-                await page.wait_for_selector("table.tbl_typeA.purple.mt30", timeout=2000)
+                await page.wait_for_selector(
+                    "table.tbl_typeA.purple.mt30", timeout=2000
+                )
                 log.debug("[SESSION] Purple tables found - session valid")
                 validation_passed = True
             except Exception:
-                log.debug("[SESSION] Purple tables not found quickly, checking page state...")
+                log.debug(
+                    "[SESSION] Purple tables not found quickly, checking page state..."
+                )
 
             # Jika validation gagal, cek apakah perlu login
             if not validation_passed:
                 current_url = page.url
                 page_content = await page.content()
-                
+
                 need_login = (
-                    "Please Login" in page_content 
+                    "Please Login" in page_content
                     or "sKorTestNo" in page_content
                     or "login" in current_url.lower()
                     or "langMain" in current_url
@@ -203,7 +210,9 @@ async def ensure_session_fast(
 
                 if need_login or force_login:
                     log.info("[SESSION] Login required, authenticating...")
-                    login_result = await _quick_login_flow(page, username, password, birthday)
+                    login_result = await _quick_login_flow(
+                        page, username, password, birthday
+                    )
                     if login_result:
                         # Setelah login success, navigasi ke progress page
                         await _ultra_fast_navigation(page, PROGRESS_URL)
@@ -286,9 +295,9 @@ async def _close_browser_fast(user_key: str):
             logger.debug(f"[SESSION] Error closing page for {user_key}: {e}")
 
         try:
-                if sess.context:
-                    # Return context to pool if available, otherwise close
-                    await release_pooled_context(sess.context)
+            if sess.context:
+                # Return context to pool if available, otherwise close
+                await release_pooled_context(sess.context)
         except Exception as e:
             logger.debug(f"[SESSION] Error closing context for {user_key}: {e}")
 
@@ -317,17 +326,19 @@ async def with_session_fast(
 
     # Cleanup sessions (async - tidak blocking)
     cleanup_task = asyncio.create_task(cleanup_idle_fast(ttl_sec=3600, logger_=logger_))
-    
+
     # Get or create session
     sess = _SESS.get(user_key)
-    
+
     if sess and await _is_session_valid(sess):
         log.info(f"[SESSION] Using existing session for {user_key}")
     else:
         if sess:
-            log.warning(f"[SESSION] Existing session invalid, creating new one for {user_key}")
+            log.warning(
+                f"[SESSION] Existing session invalid, creating new one for {user_key}"
+            )
             await _close_browser_fast(user_key)
-        
+
         try:
             browser, context, page = await setup_browser(profile_name=user_key)
             sess = _Session(
@@ -348,9 +359,9 @@ async def with_session_fast(
     # Force login logic - simplified
     session_age = now - sess.created_monotonic
     force_login = (
-        not sess.is_authenticated or 
-        session_age > 2700 or
-        (sess.last_login_monotonic and (now - sess.last_login_monotonic) > ttl)
+        not sess.is_authenticated
+        or session_age > 2700
+        or (sess.last_login_monotonic and (now - sess.last_login_monotonic) > ttl)
     )
 
     log.info(f"[SESSION] Force login: {force_login}, session_age: {session_age:.0f}s")
@@ -359,7 +370,9 @@ async def with_session_fast(
         # Ultra-fast session ensure
         # If the page was closed already, attempt to recreate context+page before calling ensure
         if sess.page.is_closed():
-            log.info("[SESSION] sess.page closed before ensure, attempting recreate before ensure")
+            log.info(
+                "[SESSION] sess.page closed before ensure, attempting recreate before ensure"
+            )
             try:
                 # Close any stale page/context
                 try:
@@ -382,7 +395,9 @@ async def with_session_fast(
 
         # First attempt to ensure
         try:
-            ok = await ensure_session_fast(sess.page, username, password, birthday, force_login, log)
+            ok = await ensure_session_fast(
+                sess.page, username, password, birthday, force_login, log
+            )
         except Exception as e:
             log.debug(f"[SESSION] ensure_session_fast raised: {e}")
             ok = False
@@ -390,7 +405,9 @@ async def with_session_fast(
         # If ensure failed due to closed page, try one recreate+retry (existing defensive retry)
         if not ok:
             # Defensive retry: if page/context was closed or transient issue, recreate context/page once and retry
-            log.info("[SESSION] ensure_session_fast failed, attempting one recreate/retry")
+            log.info(
+                "[SESSION] ensure_session_fast failed, attempting one recreate/retry"
+            )
             try:
                 # Close any stale page/context
                 try:
@@ -411,7 +428,9 @@ async def with_session_fast(
                 sess.browser = browser
 
                 # Try ensure again
-                ok = await ensure_session_fast(sess.page, username, password, birthday, force_login, log)
+                ok = await ensure_session_fast(
+                    sess.page, username, password, birthday, force_login, log
+                )
             except Exception as e:
                 log.debug(f"[SESSION] recreate/retry failed: {e}")
 
@@ -438,6 +457,7 @@ async def with_session_fast(
         log.error(f"[SESSION] Session error: {e}")
         await _close_browser_fast(user_key)
         raise
+
 
 async def _is_session_valid(sess: _Session) -> bool:
     """Check if session is still valid"""
