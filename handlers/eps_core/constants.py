@@ -1,18 +1,11 @@
-#constants.py
+# constants.py
 
-# URLs & selector
+# URLs & constants
 LOGIN_URL = "https://www.eps.go.kr/eo/langMain.eo?langCD=in"
 PROGRESS_URL = (
     "https://www.eps.go.kr/eo/EntProgCk.eo?pgID=P_000000015&langCD=in&menuID=10008"
 )
 BASE = "https://www.eps.go.kr"
-
-SEL = {
-    "nama_ready": "table.tbl_typeA.center",
-    "nama_value": "table.tbl_typeA.center td:nth-child(2)",
-    "tables_purple": "table.tbl_typeA.purple.mt30",
-    "row_anchor": 'a[href^="javascript:fncDetailRow("]',  # anchor nomor roster
-}
 
 # Regex precompiled
 import re
@@ -23,8 +16,8 @@ RANGE_RE = re.compile(r"(\d{4}-\d{2}-\d{2}~\d{4}-\d{2}-\d{2})")
 # Normalisasi label & mapping emoji
 NORMALIZE_LABELS = {
     "알선 횟수": "Jumlah pencocokan/mediasi pekerjaan",
-    "고용허가제 한국어능력시험": "Ujian Bahasa Korea",  # Tambahkan ini
-    "Korean Language Test": "Ujian Bahasa Korea",  # Tambahkan ini
+    "고용허가제 한국어능력시험": "Ujian Bahasa Korea",
+    "Korean Language Test": "Ujian Bahasa Korea",
 }
 
 MEDIASI_LABELS = {"Jumlah pencocokan/mediasi pekerjaan", "알선 횟수"}
@@ -58,16 +51,14 @@ EMOJI_MAP = {
     "알선 횟수": "🔹",
 }
 
-# handlers/eps_core/constants.py - TAMBAH selector alternatives
-
+# Single unified selector map (used across navigator/scraper/parsers)
 SEL = {
     "nama_ready": "table.tbl_typeA.center",
     "nama_value": "table.tbl_typeA.center td:nth-child(2)",
     "tables_purple": "table.tbl_typeA.purple.mt30",
     "row_anchor": 'a[href^="javascript:fncDetailRow("]',
-    
-    # Tambahan selectors untuk fallback
+    # Fallback selectors
     "any_purple_table": "table.purple",
     "any_table": "table",
-    "nama_fallback": "td:nth-child(2)"  # Fallback simple
+    "nama_fallback": "td:nth-child(2)",
 }

@@ -45,8 +45,8 @@ class BrowserConfig:
                 "--disable-notifications",
             ],
             "timeouts": {
-                "navigation": 30000,
-                "default": 30000,
+                "navigation": 15000,
+                "default": 15000,
             },
         },
         "darwin": {  # macOS
@@ -69,8 +69,8 @@ class BrowserConfig:
                 "--disable-translate",
             ],
             "timeouts": {
-                "navigation": 25000,
-                "default": 25000,
+                "navigation": 15000,
+                "default": 15000,
             },
         },
         "linux": {
@@ -91,8 +91,8 @@ class BrowserConfig:
                 "--disable-default-apps",
             ],
             "timeouts": {
-                "navigation": 25000,
-                "default": 25000,
+                "navigation": 15000,
+                "default": 15000,
             },
         },
     }
@@ -123,6 +123,17 @@ class BrowserFactory:
         self.system = platform.system().lower()
         self.platform_config = self._get_platform_config()
         self._playwright = None
+        # persistent browser instance to avoid repeated costly launches
+        self._browser: Optional[Browser] = None
+        # lock to serialize browser creation
+        self._browser_lock = asyncio.Lock()
+        # context pool for faster context acquisition
+        self._context_pool: Optional[asyncio.Queue] = None
+        # configurable pool size via environment
+        try:
+            self._pool_size = int(os.getenv("BROWSER_CONTEXT_POOL_SIZE", "2"))
+        except Exception:
+            self._pool_size = 2
 
     def _get_platform_config(self):
         """Get configuration untuk current platform"""
@@ -150,18 +161,22 @@ class BrowserFactory:
     async def _create_browser(self, profile_name: Optional[str] = None) -> Browser:
         """Create browser instance"""
         playwright = await self._setup_playwright()
+        # Reuse existing browser if available and connected
+        async with self._browser_lock:
+            if self._browser and self._browser.is_connected():
+                return self._browser
 
-        # Launch options - Playwright tidak butuh user_data_dir di sini
-        launch_options = {
-            "headless": self._get_bool_env("HEADLESS", self.config.HEADLESS_DEFAULT),
-            "args": self.platform_config["launch_args"],
-        }
+            # Launch options - Playwright tidak butuh user_data_dir di sini
+            launch_options = {
+                "headless": self._get_bool_env("HEADLESS", self.config.HEADLESS_DEFAULT),
+                "args": self.platform_config["launch_args"],
+            }
 
-        # Launch browser
-        browser = await playwright.chromium.launch(**launch_options)
-        logger.info(f"Browser launched")
+            # Launch browser and keep it for reuse
+            self._browser = await playwright.chromium.launch(**launch_options)
+            logger.info(f"Browser launched (new persistent instance)")
 
-        return browser
+            return self._browser
 
     async def _create_context(
         self, browser: Browser, profile_name: Optional[str] = None
@@ -272,6 +287,119 @@ class BrowserFactory:
         """
         )
 
+    async def _ensure_context_pool(self, browser: Browser):
+        """Initialize the context pool (lazy) and warm contexts."""
+        if self._context_pool is not None:
+            return
+
+        # Create an asyncio Queue for contexts
+        self._context_pool = asyncio.Queue(maxsize=self._pool_size)
+
+        # Warm the pool with contexts to reduce first-use latency
+        created = 0
+        for _ in range(self._pool_size):
+            try:
+                ctx = await self._create_context(browser)
+                await self._context_pool.put(ctx)
+                created += 1
+            except Exception as e:
+                logger.debug(f"Failed to warm context pool: {e}")
+                break
+
+        logger.info(f"Context pool initialized (size={created})")
+
+    async def acquire_context(self, browser: Browser, profile_name: Optional[str] = None) -> BrowserContext:
+        """Acquire a BrowserContext from the pool or create a new one if empty."""
+        # Ensure pool exists
+        try:
+            await self._ensure_context_pool(browser)
+        except Exception:
+            # Fallback to creating a single context if pool init fails
+            return await self._create_context(browser, profile_name)
+
+        # Try to get a pooled context without waiting
+        try:
+            ctx = self._context_pool.get_nowait()
+            logger.debug("[POOL] Acquired context from pool")
+
+            # Sanity check: if context is somehow closed, discard and create new
+            try:
+                _ = ctx.browser
+            except Exception:
+                logger.debug("[POOL] Discarded context (invalid browser ref)")
+                try:
+                    await ctx.close()
+                except Exception:
+                    pass
+                return await self._create_context(browser, profile_name)
+
+            # Ensure context has no leftover pages (clean slate)
+            try:
+                pages = ctx.pages
+                if pages:
+                    logger.debug(f"[POOL] Found {len(pages)} leftover pages in context, closing them")
+                    for p in list(pages):
+                        try:
+                            if not p.is_closed():
+                                await p.close()
+                        except Exception:
+                            pass
+            except Exception:
+                # If we can't inspect pages, bail and create fresh context
+                logger.debug("[POOL] Unable to inspect pages, creating fresh context")
+                try:
+                    await ctx.close()
+                except Exception:
+                    pass
+                return await self._create_context(browser, profile_name)
+
+            return ctx
+        except asyncio.QueueEmpty:
+            # Pool exhausted; create one-off context (caller should release it)
+            logger.debug("[POOL] Pool exhausted, creating new context on-demand")
+            return await self._create_context(browser, profile_name)
+
+    async def release_context(self, context: BrowserContext):
+        """Release a BrowserContext back to the pool or close it if pool is full/unavailable."""
+        if not context:
+            return
+
+        if self._context_pool is None:
+            try:
+                await context.close()
+            except Exception:
+                pass
+            return
+
+        try:
+            # Ensure context is in a clean state: close any leftover pages
+            try:
+                pages = context.pages
+                if pages:
+                    for p in list(pages):
+                        try:
+                            if not p.is_closed():
+                                await p.close()
+                        except Exception:
+                            pass
+            except Exception:
+                # If introspection fails, prefer closing and not returning to pool
+                logger.debug("[POOL] Could not inspect pages during release; closing context")
+                await context.close()
+                return
+
+            if self._context_pool.full():
+                logger.debug("[POOL] Pool full on release, closing context")
+                await context.close()
+            else:
+                await self._context_pool.put(context)
+                logger.debug("[POOL] Context returned to pool")
+        except Exception:
+            try:
+                await context.close()
+            except Exception:
+                pass
+
     async def create_browser_stack(
         self, profile_name: Optional[str] = None
     ) -> Tuple[Browser, BrowserContext, Page]:
@@ -318,6 +446,24 @@ class BrowserFactory:
     async def _cleanup_browser_processes(self):
         """Cleanup browser processes sebelum retry"""
         try:
+            # Close persistent browser if exists
+            try:
+                if self._browser:
+                    # Before closing browser, also drain/close any pooled contexts
+                    if self._context_pool:
+                        while not self._context_pool.empty():
+                            try:
+                                ctx = self._context_pool.get_nowait()
+                                await ctx.close()
+                            except Exception:
+                                pass
+                        self._context_pool = None
+
+                    await self._browser.close()
+                    self._browser = None
+            except Exception:
+                pass
+
             if self._playwright:
                 await self._playwright.stop()
                 self._playwright = None
@@ -327,6 +473,23 @@ class BrowserFactory:
 
     async def close(self):
         """Cleanup resources"""
+        try:
+            # Close pooled contexts first
+            if self._context_pool:
+                while not self._context_pool.empty():
+                    try:
+                        ctx = self._context_pool.get_nowait()
+                        await ctx.close()
+                    except Exception:
+                        pass
+                self._context_pool = None
+
+            if self._browser:
+                await self._browser.close()
+                self._browser = None
+        except Exception:
+            pass
+
         if self._playwright:
             await self._playwright.stop()
             self._playwright = None
@@ -342,25 +505,101 @@ async def setup_browser(
     profile_name: Optional[str] = None,
 ) -> Tuple[Browser, BrowserContext, Page]:
     """Stable browser setup"""
-    factory = BrowserFactory()
+    # Use a shared factory so we don't recreate Playwright/browser every call
+    global _DEFAULT_BROWSER_FACTORY
+    try:
+        _DEFAULT_BROWSER_FACTORY
+    except NameError:
+        _DEFAULT_BROWSER_FACTORY = BrowserFactory()
+
+    factory = _DEFAULT_BROWSER_FACTORY
 
     try:
-        browser, context, page = await factory.create_browser_stack(profile_name)
+        # Acquire (or create) persistent browser
+        browser = await factory._create_browser(profile_name)
+
+        # Acquire context from pool (or create one)
+        context = await factory.acquire_context(browser, profile_name)
+
+
+        # Create page for this context
+        page = await factory._create_page(context)
+
+        # If the page was closed immediately for some reason, try a couple of fallbacks
+        if page.is_closed():
+            logger.warning("[BROWSER] Page closed immediately after creation, trying a fresh page")
+            try:
+                page = await context.new_page()
+                await factory._apply_stealth_modifications(page)
+            except Exception:
+                # Try acquiring a fresh context from the pool (or create one)
+                try:
+                    logger.warning("[BROWSER] Creating fresh context due to closed page")
+                    # attempt to acquire another context
+                    context = await factory.acquire_context(browser, profile_name)
+                    page = await factory._create_page(context)
+                except Exception as inner_e:
+                    logger.error(f"[BROWSER] Fresh context/page attempt failed: {inner_e}")
+                    raise Exception("Page closed after creation")
 
         # Additional stability checks
         if not browser.is_connected():
             raise Exception("Browser not connected after creation")
 
-        if page.is_closed():
-            raise Exception("Page closed after creation")
-
         return browser, context, page
 
     except Exception as e:
         logger.error(f"Browser setup failed: {e}")
-        # Cleanup dan raise
-        await factory.close()
+        # Cleanup local resources (do not close the shared factory/browser - that
+        # can cause other sessions to lose their pages). Close only context/page
+        # created in this function, if any.
+        try:
+            if 'page' in locals() and page and not page.is_closed():
+                try:
+                    await page.close()
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+        try:
+            if 'context' in locals() and context:
+                try:
+                    await context.close()
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+        # Do NOT call factory.close() here; let higher-level logic decide whether
+        # to teardown the global browser. Re-raise the original exception.
         raise
+
+
+async def release_pooled_context(context: Optional[BrowserContext]):
+    """Release a context back to the factory pool (no-op if factory missing)."""
+    if not context:
+        return
+
+    global _DEFAULT_BROWSER_FACTORY
+    try:
+        _DEFAULT_BROWSER_FACTORY
+    except NameError:
+        # No factory - close directly
+        try:
+            await context.close()
+        except Exception:
+            pass
+        return
+
+    factory = _DEFAULT_BROWSER_FACTORY
+    try:
+        await factory.release_context(context)
+    except Exception:
+        try:
+            await context.close()
+        except Exception:
+            pass
 
 
 async def setup_simple_browser() -> Tuple[Browser, BrowserContext, Page]:

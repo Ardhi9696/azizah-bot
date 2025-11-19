@@ -371,20 +371,26 @@ async def wait_for_page_update(page: Page, timeout: int = 15000) -> bool:
         await page.wait_for_function(
             """
             () => {
-                // Cek berbagai loading indicators
-                const loadingSelectors = [
-                    '.loading', '.spinner', '[aria-busy="true"]',
-                    'div:contains("Loading")', 'div:contains("loading")'
-                ];
-                
-                for (const selector of loadingSelectors) {
-                    const element = document.querySelector(selector);
-                    if (element && element.offsetParent !== null) {
-                        return false;
+                // Cek beberapa loading indicators dengan cara yang kompatibel (tanpa :contains)
+                const loadingSelectors = ['.loading', '.spinner', '[aria-busy="true"]'];
+                for (const sel of loadingSelectors) {
+                    const el = document.querySelector(sel);
+                    if (el && el.offsetParent !== null) return false;
+                }
+
+                // Cek elemen yang mengandung teks 'loading' (div/span/p)
+                const textElems = Array.from(document.querySelectorAll('div, span, p'));
+                for (const el of textElems) {
+                    try {
+                        if (el && el.offsetParent !== null && /loading/i.test(el.textContent || '')) {
+                            return false;
+                        }
+                    } catch (e) {
+                        // ignore elements that throw on access
+                        continue;
                     }
                 }
-                
-                // Cek jika document ready
+
                 return document.readyState === 'complete';
             }
             """,

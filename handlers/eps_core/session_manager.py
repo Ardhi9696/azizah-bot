@@ -9,7 +9,13 @@ from dataclasses import dataclass
 from typing import Callable, Optional, Dict, Any, Tuple
 
 from playwright.async_api import Page, Browser, BrowserContext, Error
-from .browser import setup_browser, close_browser_stack, safe_goto, wait_for_selectors
+from .browser import (
+    setup_browser,
+    close_browser_stack,
+    safe_goto,
+    wait_for_selectors,
+    release_pooled_context,
+)
 from .auth import login_with, verifikasi_tanggal_lahir, normalize_birthday
 from .constants import LOGIN_URL, PROGRESS_URL, SEL
 
@@ -88,11 +94,26 @@ async def _quick_login_flow(
     try:
         logger.info(f"[SESSION] Ultra-fast login for {username}")
 
+        # Debug: log page state right before attempting login
+        try:
+            page_closed = page.is_closed()
+            page_url = page.url if not page_closed else "<closed>"
+        except Exception:
+            page_closed = True
+            page_url = "<unknown>"
+
+        logger.debug(f"[AUTH-DEBUG] before login: page.is_closed={page_closed}, url={page_url}")
+
         # Step 1: Navigate to login (ultra-fast)
         await _ultra_fast_navigation(page, LOGIN_URL)
 
         # Step 2: Login tanpa delay
-        login_success = await login_with(page, username, password)
+        try:
+            login_success = await login_with(page, username, password)
+        except Exception as e:
+            # Surface the exact Playwright error for diagnostics and re-raise
+            logger.error(f"[AUTH] Exception during login_with: {e}")
+            raise
         if not login_success:
             return False
 
@@ -255,8 +276,23 @@ async def _close_browser_fast(user_key: str):
         return
 
     try:
-        await close_browser_stack(sess.browser)
-        logger.info(f"[SESSION] Closed browser for {user_key}")
+        # Close only the page and context associated with this session.
+        # The Browser instance may be a shared persistent browser (factory-managed).
+        # Closing the shared Browser would break other sessions, so avoid closing it here.
+        try:
+            if sess.page and not sess.page.is_closed():
+                await sess.page.close()
+        except Exception as e:
+            logger.debug(f"[SESSION] Error closing page for {user_key}: {e}")
+
+        try:
+                if sess.context:
+                    # Return context to pool if available, otherwise close
+                    await release_pooled_context(sess.context)
+        except Exception as e:
+            logger.debug(f"[SESSION] Error closing context for {user_key}: {e}")
+
+        logger.info(f"[SESSION] Closed page/context for {user_key} (browser retained)")
     except Exception as e:
         logger.debug(f"[SESSION] Error closing browser: {e}")
 
@@ -321,7 +357,65 @@ async def with_session_fast(
 
     try:
         # Ultra-fast session ensure
-        if await ensure_session_fast(sess.page, username, password, birthday, force_login, log):
+        # If the page was closed already, attempt to recreate context+page before calling ensure
+        if sess.page.is_closed():
+            log.info("[SESSION] sess.page closed before ensure, attempting recreate before ensure")
+            try:
+                # Close any stale page/context
+                try:
+                    if sess.page and not sess.page.is_closed():
+                        await sess.page.close()
+                except Exception:
+                    pass
+                try:
+                    if sess.context:
+                        await sess.context.close()
+                except Exception:
+                    pass
+
+                browser, context, page = await setup_browser(profile_name=user_key)
+                sess.page = page
+                sess.context = context
+                sess.browser = browser
+            except Exception as e:
+                log.debug(f"[SESSION] pre-ensure recreate failed: {e}")
+
+        # First attempt to ensure
+        try:
+            ok = await ensure_session_fast(sess.page, username, password, birthday, force_login, log)
+        except Exception as e:
+            log.debug(f"[SESSION] ensure_session_fast raised: {e}")
+            ok = False
+
+        # If ensure failed due to closed page, try one recreate+retry (existing defensive retry)
+        if not ok:
+            # Defensive retry: if page/context was closed or transient issue, recreate context/page once and retry
+            log.info("[SESSION] ensure_session_fast failed, attempting one recreate/retry")
+            try:
+                # Close any stale page/context
+                try:
+                    if sess.page and not sess.page.is_closed():
+                        await sess.page.close()
+                except Exception:
+                    pass
+                try:
+                    if sess.context:
+                        await release_pooled_context(sess.context)
+                except Exception:
+                    pass
+
+                # Recreate context+page using setup_browser (factory will reuse persistent browser)
+                browser, context, page = await setup_browser(profile_name=user_key)
+                sess.page = page
+                sess.context = context
+                sess.browser = browser
+
+                # Try ensure again
+                ok = await ensure_session_fast(sess.page, username, password, birthday, force_login, log)
+            except Exception as e:
+                log.debug(f"[SESSION] recreate/retry failed: {e}")
+
+        if ok:
             _SESS[user_key].last_login_monotonic = time.monotonic()
             _SESS[user_key].is_authenticated = True
             _SESS[user_key].last_used_monotonic = time.monotonic()

@@ -2,35 +2,62 @@
 
 import time
 import asyncio
+from typing import Callable, Dict
+from functools import wraps
 from telegram import Update
 from telegram.ext import ContextTypes
 
-COOLDOWN_COMMAND = 10  # detik
-_last_command_time = 0  # global shared cooldown
+COOLDOWN_COMMAND = 10  # detik (per-user)
+# Simpan timestamp terakhir per user_id
+_last_command_time: Dict[int, float] = {}
 
 
-def with_cooldown(callback):
+def with_cooldown(callback: Callable):
+    @wraps(callback)
     async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        global _last_command_time
+        # Pastikan ada message dan pengirim
+        if not update.message or not update.message.from_user:
+            return await callback(update, context)
 
-        now = time.time()
-        if now - _last_command_time < COOLDOWN_COMMAND:
-            msg = await update.message.reply_text(
-                "⏳ Tunggu sebentar sebelum menggunakan perintah lagi."
-            )
+        user_id = update.message.from_user.id
+        now = time.monotonic()
+        last = _last_command_time.get(user_id, 0)
+
+        if now - last < COOLDOWN_COMMAND:
+            # Kirim notifikasi singkat, lalu schedule penghapusan tanpa blocking
             try:
-                await update.message.delete()
-            except:
-                pass
-            # Jadwalkan penghapusan pesan ⏳ setelah cooldown selesai
-            await asyncio.sleep(COOLDOWN_COMMAND)
+                notice = await update.message.reply_text(
+                    "⏳ Tunggu sebentar sebelum menggunakan perintah lagi."
+                )
+            except Exception:
+                notice = None
+
+            # Hapus pesan pengguna (coba, tapi jangan block jika gagal)
             try:
-                await msg.delete()
-            except:
+                asyncio.create_task(update.message.delete())
+            except Exception:
                 pass
+
+            # Hapus pesan notifikasi setelah cooldown secara non-blocking
+            async def _delayed_delete(msg):
+                await asyncio.sleep(COOLDOWN_COMMAND)
+                if not msg:
+                    return
+                try:
+                    await msg.delete()
+                except Exception:
+                    pass
+
+            if notice:
+                try:
+                    asyncio.create_task(_delayed_delete(notice))
+                except Exception:
+                    pass
+
             return
 
-        _last_command_time = now
+        # Update last time dan jalankan callback
+        _last_command_time[user_id] = now
         await callback(update, context)
 
     return wrapper

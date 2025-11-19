@@ -182,6 +182,30 @@ async def login_with(page: Page, username: str, password: str) -> bool:
         if not form_found:
             logger.warning("[AUTH] No login form found, trying direct input search")
 
+        # Helper: try to find a selector on page or in any frame
+        async def _find_selector_anywhere(selector: str, timeout: int = 3000):
+            try:
+                el = await page.wait_for_selector(selector, timeout=timeout, state="visible")
+                if el:
+                    return el
+            except Exception:
+                pass
+
+            # Try frames
+            try:
+                for f in page.frames:
+                    try:
+                        el = await f.wait_for_selector(selector, timeout=timeout, state="visible")
+                        if el:
+                            return el
+                    except Exception:
+                        continue
+            except Exception:
+                pass
+
+            return None
+
+
         # STRATEGY 1: Cari fields by specific EPS selectors
         username_filled = False
         eps_selectors = [
@@ -194,9 +218,7 @@ async def login_with(page: Page, username: str, password: str) -> bool:
         for selector in eps_selectors:
             try:
                 logger.debug(f"[AUTH] Trying EPS selector: {selector}")
-                element = await page.wait_for_selector(
-                    selector, timeout=5000, state="visible"
-                )
+                element = await _find_selector_anywhere(selector, timeout=4500)
                 if element:
                     await element.fill(username)
                     username_filled = True
@@ -310,9 +332,22 @@ async def _fill_password_field(page: Page, password: str) -> bool:
 
     for selector in password_selectors:
         try:
-            element = await page.wait_for_selector(
-                selector, timeout=3000, state="visible"
-            )
+            # Try to find password selector in page or frames
+            element = None
+            try:
+                element = await page.wait_for_selector(selector, timeout=2000, state="visible")
+            except Exception:
+                # Try frames
+                try:
+                    for f in page.frames:
+                        try:
+                            element = await f.wait_for_selector(selector, timeout=2000, state="visible")
+                            if element:
+                                break
+                        except Exception:
+                            continue
+                except Exception:
+                    element = None
             if element:
                 await element.fill(password)
                 logger.info(f"[AUTH] Password filled with selector: {selector}")
@@ -353,6 +388,38 @@ async def _click_login_button(page: Page) -> bool:
             return True
         except:
             continue
+    # Fallback: try to find button with onclick that calls fncLogin or evaluate fncLogin()
+    try:
+        # Look for element with onclick containing fncLogin
+        el = None
+        try:
+            el = await page.query_selector("[onclick*='fncLogin']")
+        except Exception:
+            el = None
+
+        if el:
+            try:
+                await el.click()
+                logger.info("[AUTH] Login clicked via onclick element")
+                return True
+            except Exception:
+                # try evaluate
+                try:
+                    await page.evaluate("() => { if (typeof fncLogin === 'function') fncLogin(); }")
+                    logger.info("[AUTH] Login triggered via fncLogin() evaluate")
+                    return True
+                except Exception:
+                    pass
+
+        # As last resort, try calling fncLogin directly
+        try:
+            await page.evaluate("() => { if (typeof fncLogin === 'function') fncLogin(); }")
+            logger.info("[AUTH] Login triggered via fncLogin() evaluate (last resort)")
+            return True
+        except Exception:
+            pass
+    except Exception:
+        pass
 
     return False
 
