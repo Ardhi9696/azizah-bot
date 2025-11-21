@@ -1,21 +1,12 @@
 import os
 import logging
-import asyncio
 from telegram import Update
 from logging.handlers import TimedRotatingFileHandler
 from colorlog import ColoredFormatter
 from dotenv import load_dotenv
-from utils.constants import MONITOR_INFO, MONITOR_PRELIM
 from telegram.ext import (
     Application,
     ContextTypes,
-)
-
-from utils.monitor_utils import (
-    check_api_multi,
-    is_waktu_aktif,
-    is_jam_delapan,
-    format_pesan,
 )
 
 from handlers.register_handlers import register_handlers
@@ -98,9 +89,6 @@ if not TOKEN:
     logger.critical("❌ BOT_TOKEN tidak ditemukan di .env. Keluar.")
     exit(1)
 
-CHAT_ID = os.getenv("CHAT_ID")
-THREAD_ID = int(os.getenv("THREAD_ID", 0))
-
 
 async def error_handler_function(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logger.error("🚨 Terjadi error saat memproses update:", exc_info=context.error)
@@ -115,69 +103,6 @@ async def get_chat_id(update, context):
     )
 
 
-# ===== JOB Monitoring =====
-async def monitor_job(context: ContextTypes.DEFAULT_TYPE):
-    if not is_waktu_aktif():
-        if is_jam_delapan():
-            logger.info("🔔 Waktu monitoring aktif dimulai (08:00 WIB)")
-        logger.info(
-            "⏹️ Lewat jam aktif, monitoring pengumuman & training dihentikan sementara."
-        )
-        return
-
-    if is_jam_delapan():
-        try:
-            await context.bot.send_message(
-                chat_id=CHAT_ID,
-                message_thread_id=THREAD_ID,
-                text="🕗 Selamat pagi! Monitoring pengumuman EPS-TOPIK & Training sudah aktif.\nAku akan kasih tahu kalau ada info baru ya! 😉",
-                parse_mode="Markdown",
-            )
-            logger.info("📢 Pesan pengingat jam 08:00 berhasil dikirim.")
-        except Exception as e:
-            logger.error(f"❌ Gagal kirim pesan jam 08:00: {e}")
-
-    # === Monitoring Pengumuman ===
-    pengumuman_baru = check_api_multi(
-        "https://www.kp2mi.go.id/gtog-data/korea/Pengumuman?start=0&length=10",
-        MONITOR_INFO,
-        "pengumuman",
-    )
-    for item in pengumuman_baru:
-        try:
-            pesan = format_pesan(item, tipe="pengumuman")
-            await context.bot.send_message(
-                chat_id=CHAT_ID,
-                message_thread_id=THREAD_ID,
-                text=pesan,
-                parse_mode="HTML",
-            )
-            logger.info("✅ Pengumuman baru berhasil dikirim.")
-            await asyncio.sleep(2)
-        except Exception as e:
-            logger.error(f"❌ Gagal kirim pengumuman: {e}")
-
-    # === Monitoring Preliminary Training ===
-    training_baru = check_api_multi(
-        "https://www.kp2mi.go.id/gtog-data/korea/Preliminary%20Training%20dan%20Info?start=0&length=10",
-        MONITOR_PRELIM,
-        "training",
-    )
-    for item in training_baru:
-        try:
-            pesan = format_pesan(item, tipe="training")
-            await context.bot.send_message(
-                chat_id=CHAT_ID,
-                message_thread_id=THREAD_ID,
-                text=pesan,
-                parse_mode="HTML",
-            )
-            logger.info("✅ Info training baru berhasil dikirim.")
-            await asyncio.sleep(2)
-        except Exception as e:
-            logger.error(f"❌ Gagal kirim info training: {e}")
-
-
 # ===== Main Program =====
 def main():
     application = Application.builder().token(TOKEN).build()
@@ -185,9 +110,6 @@ def main():
 
     # === Register Handlers ===
     register_handlers(application)
-
-    # === Jadwal monitoring tiap menit ===
-    application.job_queue.run_repeating(monitor_job, interval=60, first=5)
 
     # === Warm-up Playwright browser once shortly after startup ===
     async def _warmup_browser(context: ContextTypes.DEFAULT_TYPE):

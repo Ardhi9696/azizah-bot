@@ -73,7 +73,23 @@ def is_reply_to_bot(update: Update) -> bool:
 
 # === Load .env dan Admin Whitelist ===
 load_dotenv()
-ADMIN_IDS = list(map(int, os.getenv("ADMIN_LIST", "").split(",")))
+
+
+def _parse_admin_ids(raw: str) -> list[int]:
+    """Parse ADMIN_LIST dengan aman, abaikan nilai kosong/non-int."""
+    ids = []
+    for part in (raw or "").split(","):
+        part = part.strip()
+        if not part:
+            continue
+        try:
+            ids.append(int(part))
+        except ValueError:
+            continue
+    return ids
+
+
+ADMIN_IDS = _parse_admin_ids(os.getenv("ADMIN_LIST", ""))
 OWNER_ID = int(os.getenv("MY_TELEGRAM_ID", "0"))
 
 # === Konfigurasi ===

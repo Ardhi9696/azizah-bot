@@ -50,7 +50,15 @@ def load_eps_accounts() -> Dict[int, Dict[str, str]]:
         with open(ACCOUNTS_FILE, "r", encoding="utf-8") as f:
             data = json.load(f) or {}
             logger.info(f"📘 Memuat akun EPS dari {ACCOUNTS_FILE}")
-            return {int(k): v for k, v in data.items()}
+
+            parsed: Dict[int, Dict[str, str]] = {}
+            for k, v in data.items():
+                try:
+                    parsed[int(k)] = v
+                except (ValueError, TypeError):
+                    logger.warning(f"⚠️ Melewati entry akun dengan key tidak valid: {k}")
+                    continue
+            return parsed
     except Exception as e:
         logger.error(f"❌ Gagal memuat {ACCOUNTS_FILE}: {e}")
         return {}

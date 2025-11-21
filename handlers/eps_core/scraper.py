@@ -91,7 +91,7 @@ async def akses_progress(page: Page, prefer_row2: bool = True) -> dict:
                         f"[SCRAPER] Successfully selected row 2: {aktif_ref_id}"
                     )
                     # Setelah select row 2, ambil content baru
-                    await asyncio.sleep(2)  # Tunggu update
+                    await asyncio.sleep(1)  # Tunggu update (dipersingkat)
                     page_content = await page.content()
                     soup = BeautifulSoup(page_content, "lxml")
                     # Parse ulang data dengan content yang updated
@@ -206,8 +206,8 @@ async def _process_mediasi_data_reliable(
 
             # Switch ke roster
             if await _switch_to_ref(page, ref_id):
-                # Tunggu lebih lama untuk memastikan halaman update
-                await asyncio.sleep(3)
+                # Tunggu singkat untuk memastikan halaman update
+                await asyncio.sleep(0.5)
 
                 # Ambil data riwayat yang baru
                 current_riwayat = await _get_current_riwayat(page)
@@ -220,7 +220,7 @@ async def _process_mediasi_data_reliable(
                 await page.goto(
                     current_url, wait_until="domcontentloaded", timeout=15000
                 )
-                await asyncio.sleep(2)  # Tunggu navigasi kembali
+                await asyncio.sleep(0.5)  # Tunggu navigasi kembali
             else:
                 logger.warning(f"[SCRAPER] Gagal switch ke ref {ref_id}")
 
@@ -304,12 +304,19 @@ async def _navigate_to_progress_page(page: Page) -> None:
     """Handle navigation ke halaman progress"""
     current_url = page.url
 
-    if PROGRESS_URL not in current_url:
+    if PROGRESS_URL in current_url:
+        # Jika sudah di progress dan tabel sudah ada, skip reload
+        try:
+            if await page.query_selector(SEL["tables_purple"]):
+                logger.debug("[SCRAPER] Already on progress page with tables, skip reload")
+                return
+        except Exception:
+            pass
+        logger.debug("[SCRAPER] On progress page but tables missing, reload...")
+        await page.reload(wait_until="domcontentloaded", timeout=15000)
+    else:
         logger.debug("[SCRAPER] Navigating to progress page...")
         await page.goto(PROGRESS_URL, wait_until="domcontentloaded", timeout=20000)
-    else:
-        logger.debug("[SCRAPER] Already on progress page, quick reload...")
-        await page.reload(wait_until="domcontentloaded", timeout=15000)
 
 
 async def _wait_for_page_ready(page: Page) -> bool:
@@ -323,7 +330,7 @@ async def _wait_for_page_ready(page: Page) -> bool:
 
     for selector in selectors_to_check:
         try:
-            await page.wait_for_selector(selector, timeout=5000)
+            await page.wait_for_selector(selector, timeout=4000)
             logger.debug(f"[SCRAPER] Page ready - found: {selector}")
             return True
         except Exception:

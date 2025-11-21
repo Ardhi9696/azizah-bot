@@ -129,6 +129,8 @@ class BrowserFactory:
         self._browser_lock = asyncio.Lock()
         # context pool for faster context acquisition
         self._context_pool: Optional[asyncio.Queue] = None
+        # allow disabling pool if sering bermasalah
+        self._pool_disabled = self._get_bool_env("DISABLE_CONTEXT_POOL", True)
         # configurable pool size via environment
         try:
             self._pool_size = int(os.getenv("BROWSER_CONTEXT_POOL_SIZE", "2"))
@@ -291,6 +293,8 @@ class BrowserFactory:
 
     async def _ensure_context_pool(self, browser: Browser):
         """Initialize the context pool (lazy) and warm contexts."""
+        if self._pool_disabled:
+            return
         if self._context_pool is not None:
             return
 
@@ -314,6 +318,10 @@ class BrowserFactory:
         self, browser: Browser, profile_name: Optional[str] = None
     ) -> BrowserContext:
         """Acquire a BrowserContext from the pool or create a new one if empty."""
+        # Jika pool dimatikan, selalu buat context baru agar bersih
+        if self._pool_disabled:
+            return await self._create_context(browser, profile_name)
+
         # Ensure pool exists
         try:
             await self._ensure_context_pool(browser)
@@ -370,7 +378,7 @@ class BrowserFactory:
         if not context:
             return
 
-        if self._context_pool is None:
+        if self._pool_disabled or self._context_pool is None:
             try:
                 await context.close()
             except Exception:
@@ -522,71 +530,99 @@ async def setup_browser(
 
     factory = _DEFAULT_BROWSER_FACTORY
 
-    try:
-        # Acquire (or create) persistent browser
-        browser = await factory._create_browser(profile_name)
+    # At most 2 attempts with cleanup in between to recover from TargetClosedError
+    for attempt in range(2):
+        try:
+            # Acquire (or create) persistent browser
+            browser = await factory._create_browser(profile_name)
 
-        # Acquire context from pool (or create one)
-        context = await factory.acquire_context(browser, profile_name)
+            # Acquire context from pool (or create one)
+            context = await factory.acquire_context(browser, profile_name)
 
-        # Create page for this context
-        page = await factory._create_page(context)
-
-        # If the page was closed immediately for some reason, try a couple of fallbacks
-        if page.is_closed():
-            logger.warning(
-                "[BROWSER] Page closed immediately after creation, trying a fresh page"
-            )
+            # Create page for this context
             try:
-                page = await context.new_page()
-                await factory._apply_stealth_modifications(page)
+                page = await factory._create_page(context)
+            except Exception as e:
+                logger.warning(
+                    f"[BROWSER] Gagal membuat page dari context (akan coba ulang): {e}"
+                )
+                try:
+                    await factory.release_context(context)
+                except Exception:
+                    pass
+
+                # fresh browser/context on retry
+                browser = await factory._create_browser(profile_name)
+                context = await factory.acquire_context(browser, profile_name)
+                page = await factory._create_page(context)
+
+            # If the page was closed immediately for some reason, try a couple of fallbacks
+            if page.is_closed():
+                logger.warning(
+                    "[BROWSER] Page closed immediately after creation, trying a fresh page"
+                )
+                try:
+                    page = await context.new_page()
+                    await factory._apply_stealth_modifications(page)
+                except Exception:
+                    # Try acquiring a fresh context from the pool (or create one)
+                    try:
+                        logger.warning(
+                            "[BROWSER] Creating fresh context due to closed page"
+                        )
+                        # attempt to acquire another context
+                        context = await factory.acquire_context(browser, profile_name)
+                        page = await factory._create_page(context)
+                    except Exception as inner_e:
+                        logger.error(
+                            f"[BROWSER] Fresh context/page attempt failed: {inner_e}"
+                        )
+                        raise Exception("Page closed after creation")
+
+            # Additional stability checks
+            if not browser.is_connected():
+                raise Exception("Browser not connected after creation")
+
+            return browser, context, page
+
+        except Exception as e:
+            logger.error(f"Browser setup failed: {e}")
+            # Cleanup local resources (do not close the shared factory/browser - that
+            # can cause other sessions to lose their pages). Close only context/page
+            # created in this iteration, if any.
+            try:
+                if "page" in locals() and page and not page.is_closed():
+                    try:
+                        await page.close()
+                    except Exception:
+                        pass
             except Exception:
-                # Try acquiring a fresh context from the pool (or create one)
+                pass
+
+            try:
+                if "context" in locals() and context:
+                    try:
+                        await context.close()
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+
+            # Jika masih gagal dan ini attempt pertama, bersihkan browser & pool lalu coba lagi
+            if attempt == 0:
                 try:
-                    logger.warning(
-                        "[BROWSER] Creating fresh context due to closed page"
-                    )
-                    # attempt to acquire another context
-                    context = await factory.acquire_context(browser, profile_name)
-                    page = await factory._create_page(context)
-                except Exception as inner_e:
-                    logger.error(
-                        f"[BROWSER] Fresh context/page attempt failed: {inner_e}"
-                    )
-                    raise Exception("Page closed after creation")
-
-        # Additional stability checks
-        if not browser.is_connected():
-            raise Exception("Browser not connected after creation")
-
-        return browser, context, page
-
-    except Exception as e:
-        logger.error(f"Browser setup failed: {e}")
-        # Cleanup local resources (do not close the shared factory/browser - that
-        # can cause other sessions to lose their pages). Close only context/page
-        # created in this function, if any.
-        try:
-            if "page" in locals() and page and not page.is_closed():
-                try:
-                    await page.close()
+                    await factory._cleanup_browser_processes()
                 except Exception:
                     pass
-        except Exception:
-            pass
-
-        try:
-            if "context" in locals() and context:
+                # reset pooled contexts flag
                 try:
-                    await context.close()
+                    factory._context_pool = None
                 except Exception:
                     pass
-        except Exception:
-            pass
+                continue
 
-        # Do NOT call factory.close() here; let higher-level logic decide whether
-        # to teardown the global browser. Re-raise the original exception.
-        raise
+            # Do NOT call factory.close() here; re-raise after last attempt
+            raise
 
 
 async def release_pooled_context(context: Optional[BrowserContext]):

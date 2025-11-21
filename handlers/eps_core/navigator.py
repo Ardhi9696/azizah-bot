@@ -69,11 +69,11 @@ async def _try_select_row2(page: Page) -> Optional[str]:
                     return currentTables.length > 0;
                 }
                 """,
-                timeout=12000,
+                timeout=6000,
             )
 
             # Additional wait untuk memastikan content berubah
-            await asyncio.sleep(1)
+            await asyncio.sleep(0.3)
 
             logger.debug("[NAVIGATOR] Page updated after row selection")
             return ref_id
@@ -138,11 +138,11 @@ async def _switch_to_ref(page: Page, ref_id: str) -> bool:
                     return tables.length >= 2;
                 }
                 """,
-                timeout=12000,
+                timeout=6000,
             )
 
             # Additional wait untuk memastikan update complete
-            await asyncio.sleep(0.6)
+            await asyncio.sleep(0.3)
 
             logger.debug(f"[NAVIGATOR] Successfully switched to ref: {ref_id}")
             return True

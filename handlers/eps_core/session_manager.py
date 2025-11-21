@@ -358,13 +358,38 @@ async def with_session_fast(
 
     # Force login logic - simplified
     session_age = now - sess.created_monotonic
-    force_login = (
-        not sess.is_authenticated
-        or session_age > 2700
-        or (sess.last_login_monotonic and (now - sess.last_login_monotonic) > ttl)
+    recent_login = sess.last_login_monotonic and (
+        (now - sess.last_login_monotonic) < 600
     )
+    if sess.is_authenticated and recent_login:
+        force_login = False
+    else:
+        force_login = (
+            not sess.is_authenticated
+            or session_age > 2700
+            or (sess.last_login_monotonic and (now - sess.last_login_monotonic) > ttl)
+        )
 
     log.info(f"[SESSION] Force login: {force_login}, session_age: {session_age:.0f}s")
+
+    # Fast path: jika sudah authenticated sangat baru, page masih hidup, dan tidak force_login,
+    # langsung jalankan fn tanpa ensure untuk menghemat re-login/navigasi.
+    if (
+        sess.is_authenticated
+        and recent_login
+        and not force_login
+        and sess.page
+        and not sess.page.is_closed()
+    ):
+        try:
+            log.info("[SESSION] Fast path: skip ensure, reuse existing authenticated page")
+            result = await fn(sess.page)
+            _SESS[user_key].last_used_monotonic = time.monotonic()
+            await cleanup_task
+            return result
+        except Exception as e:
+            log.debug(f"[SESSION] Fast path failed, fallback to ensure: {e}")
+            # fallback to normal ensure below
 
     try:
         # Ultra-fast session ensure
@@ -405,9 +430,7 @@ async def with_session_fast(
         # If ensure failed due to closed page, try one recreate+retry (existing defensive retry)
         if not ok:
             # Defensive retry: if page/context was closed or transient issue, recreate context/page once and retry
-            log.info(
-                "[SESSION] ensure_session_fast failed, attempting one recreate/retry"
-            )
+            log.info("[SESSION] ensure_session_fast failed, attempting recreate+retry")
             try:
                 # Close any stale page/context
                 try:
@@ -428,11 +451,31 @@ async def with_session_fast(
                 sess.browser = browser
 
                 # Try ensure again
-                ok = await ensure_session_fast(
-                    sess.page, username, password, birthday, force_login, log
-                )
+                try:
+                    ok = await ensure_session_fast(
+                        sess.page, username, password, birthday, force_login, log
+                    )
+                except Exception as e:
+                    log.debug(f"[SESSION] ensure_session_fast raised on retry: {e}")
+                    ok = False
             except Exception as e:
                 log.debug(f"[SESSION] recreate/retry failed: {e}")
+                ok = False
+
+        # If still not ok, do one final hard reset: fresh browser & page (no reuse)
+        if not ok:
+            log.info("[SESSION] ensure failed after retry, doing final fresh browser/page")
+            try:
+                browser, context, page = await setup_browser(profile_name=f"{user_key}_final")
+                sess.page = page
+                sess.context = context
+                sess.browser = browser
+                ok = await ensure_session_fast(
+                    sess.page, username, password, birthday, True, log
+                )
+            except Exception as e:
+                log.debug(f"[SESSION] final fresh attempt failed: {e}")
+                ok = False
 
         if ok:
             _SESS[user_key].last_login_monotonic = time.monotonic()
