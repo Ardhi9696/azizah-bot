@@ -18,6 +18,11 @@ Berikut daftar perintah yang tersedia:
 /get – Update pengumuman terbaru G to G  
 /prelim – Info tahap prelim (pra-keberangkatan)  
 
+🗒️ *Catatan Bot*  
+/list – Lihat daftar catatan  
+/notes – Lihat daftar catatan Korea  
+#hashtag – Lihat detail catatan (ketik di chat tanpa slash)  
+
 🔎 *Cek Hasil CBT EPS-TOPIK*  
 /cek [nomor EPS] – Cek hasil CBT berdasarkan nomor ujian  
 Contoh: `/cek 012202512345678`
