@@ -151,7 +151,7 @@ async def login_with(page: Page, username: str, password: str) -> bool:
         logger.debug("[AUTH] Navigation completed")
 
         # Tunggu lebih lama untuk pastikan page fully loaded
-        await asyncio.sleep(3)
+        await asyncio.sleep(1)
 
         # DEBUG: Screenshot untuk troubleshooting
         try:
@@ -182,9 +182,26 @@ async def login_with(page: Page, username: str, password: str) -> bool:
 
         if not form_found:
             logger.warning("[AUTH] No login form found, trying direct input search")
+            # coba reload ringan sekali sebelum lanjut
+            try:
+                await page.reload(wait_until="domcontentloaded", timeout=10000)
+                await asyncio.sleep(0.3)
+                # coba sekali lagi form
+                for form_selector in login_form_selectors:
+                    try:
+                        form = await page.query_selector(form_selector)
+                        if form:
+                            form_found = True
+                            logger.info(f"[AUTH] Login form found after reload: {form_selector}")
+                            break
+                    except:
+                        continue
+            except Exception as e:
+                logger.debug(f"[AUTH] Reload-on-miss warning: {e}")
 
         # Helper: try to find a selector on page or in any frame
         async def _find_selector_anywhere(selector: str, timeout: int = 3000):
+            # Coba tunggu visible dulu
             try:
                 el = await page.wait_for_selector(
                     selector, timeout=timeout, state="visible"
@@ -192,7 +209,13 @@ async def login_with(page: Page, username: str, password: str) -> bool:
                 if el:
                     return el
             except Exception:
-                pass
+                # Fallback: cari tanpa syarat visible
+                try:
+                    el = await page.query_selector(selector)
+                    if el:
+                        return el
+                except Exception:
+                    pass
 
             # Try frames
             try:
@@ -204,36 +227,40 @@ async def login_with(page: Page, username: str, password: str) -> bool:
                         if el:
                             return el
                     except Exception:
-                        continue
+                        # Fallback: cari tanpa syarat visible di frame
+                        try:
+                            el = await f.query_selector(selector)
+                            if el:
+                                return el
+                        except Exception:
+                            continue
             except Exception:
                 pass
 
             return None
 
-        # STRATEGY 1: Cari fields by specific EPS selectors
-        username_filled = False
-        eps_selectors = [
-            "#sKorTestNo",
-            "input[name='sKorTestNo']",
-            "input[name='username']",
-            "#username",
-        ]
+        async def _fill_username_once() -> bool:
+            # STRATEGY 1: Cari fields by specific EPS selectors
+            eps_selectors = [
+                "#sKorTestNo",
+                "input[name='sKorTestNo']",
+                "input[name='username']",
+                "#username",
+            ]
 
-        for selector in eps_selectors:
-            try:
-                logger.debug(f"[AUTH] Trying EPS selector: {selector}")
-                element = await _find_selector_anywhere(selector, timeout=4500)
-                if element:
-                    await element.fill(username)
-                    username_filled = True
-                    logger.info(f"[AUTH] Username filled with EPS selector: {selector}")
-                    break
-            except Exception as e:
-                logger.debug(f"[AUTH] EPS selector {selector} failed: {e}")
-                continue
+            for selector in eps_selectors:
+                try:
+                    logger.debug(f"[AUTH] Trying EPS selector: {selector}")
+                    element = await _find_selector_anywhere(selector, timeout=7000)
+                    if element:
+                        await element.fill(username)
+                        logger.info(f"[AUTH] Username filled with EPS selector: {selector}")
+                        return True
+                except Exception as e:
+                    logger.debug(f"[AUTH] EPS selector {selector} failed: {e}")
+                    continue
 
-        # STRATEGY 2: Cari by input type dan attributes
-        if not username_filled:
+            # STRATEGY 2: Cari by input type dan attributes
             generic_selectors = [
                 "input[type='text']",
                 "input[placeholder*='test']",
@@ -253,21 +280,17 @@ async def login_with(page: Page, username: str, password: str) -> bool:
                             is_enabled = await element.is_enabled()
                             if is_visible and is_enabled:
                                 await element.fill(username)
-                                username_filled = True
                                 logger.info(
                                     f"[AUTH] Username filled with generic selector: {selector}"
                                 )
-                                break
+                                return True
                         except:
                             continue
-                    if username_filled:
-                        break
                 except Exception as e:
                     logger.debug(f"[AUTH] Generic selector {selector} failed: {e}")
                     continue
 
-        # STRATEGY 3: Fallback - cari semua input fields
-        if not username_filled:
+            # STRATEGY 3: Fallback - cari semua input fields
             try:
                 all_inputs = await page.query_selector_all("input")
                 logger.debug(f"[AUTH] Found {len(all_inputs)} input fields")
@@ -280,15 +303,80 @@ async def login_with(page: Page, username: str, password: str) -> bool:
                             is_enabled = await input_elem.is_enabled()
                             if is_visible and is_enabled:
                                 await input_elem.fill(username)
-                                username_filled = True
                                 logger.info(
                                     f"[AUTH] Username filled with fallback (input #{i})"
                                 )
-                                break
+                                return True
                     except:
                         continue
             except Exception as e:
                 logger.debug(f"[AUTH] Fallback strategy failed: {e}")
+
+            # STRATEGY 4: JS fill langsung (main frame + frames)
+            script = """
+            (value) => {
+                const selectors = [
+                    '#sKorTestNo',
+                    'input[name=\"sKorTestNo\"]',
+                    'input[name=\"username\"]',
+                    '#username',
+                    'input[type=\"text\"]',
+                    'input[type=\"number\"]'
+                ];
+                for (const sel of selectors) {
+                    const el = document.querySelector(sel);
+                    if (el && !el.disabled) {
+                        el.value = value;
+                        el.dispatchEvent(new Event('input', { bubbles: true }));
+                        return true;
+                    }
+                }
+                return false;
+            }
+            """
+            try:
+                filled = await page.evaluate(script, username)
+                if filled:
+                    logger.info("[AUTH] Username filled via JS on main frame")
+                    return True
+            except Exception as e:
+                logger.debug(f"[AUTH] JS fill main frame failed: {e}")
+
+            # Try frames
+            for f in page.frames:
+                try:
+                    filled = await f.evaluate(script, username)
+                    if filled:
+                        logger.info("[AUTH] Username filled via JS on frame")
+                        return True
+                except Exception:
+                    continue
+
+            return False
+
+        username_filled = False
+        for attempt in range(3):
+            username_filled = await _fill_username_once()
+            if username_filled:
+                break
+            if attempt == 0:
+                logger.warning(
+                    "[AUTH] Username field not found, reloading page and retrying once"
+                )
+                try:
+                    await page.reload(wait_until="domcontentloaded", timeout=12000)
+                    await asyncio.sleep(1)
+                except Exception as e:
+                    logger.debug(f"[AUTH] Reload warning: {e}")
+            elif attempt == 1:
+                logger.warning(
+                    "[AUTH] Username field still not found, navigating fresh to login page"
+                )
+                try:
+                    await page.goto(LOGIN_URL, wait_until="domcontentloaded", timeout=15000)
+                    await asyncio.sleep(1)
+                except Exception as e:
+                    logger.debug(f"[AUTH] Navigation retry warning: {e}")
 
         if not username_filled:
             logger.error("[AUTH] ❌ Cannot find username field after all strategies")
