@@ -101,3 +101,72 @@ async def kurs_won(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         )
     else:
         await waiting_msg.edit_text("❌ Gagal mengambil kurs.")
+
+
+# ===== USD =====
+async def kurs_usd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    text = update.message.text
+    args = text.split()
+
+    amt = 1.0
+    if len(args) >= 2:
+        try:
+            amt = float(args[1])
+        except ValueError:
+            await update.message.reply_text("Gunakan: /kursusd atau /kursusd <nominal_USD>")
+            return
+
+    logger.info(
+        f"[📥 /kursusd] {user.full_name} ({user.id}) meminta konversi {amt} USD → IDR"
+    )
+
+    waiting_msg = await update.message.reply_text("🔄 Mohon tunggu, menghitung...")
+
+    rate = get_rate("usd", "idr")
+    if rate:
+        hasil = amt * rate
+        await waiting_msg.delete()
+        logger.info(f"[✅ RESP] {amt:.2f} USD = {hasil:,.2f} IDR dikirim ke {user.id}")
+        await update.message.reply_text(
+            f"*💱 KURS USD → IDR*\n\n🇺🇸 {amt:.2f} USD = 🇮🇩 {hasil:,.2f} IDR\n\n"
+            f"📌 1 USD = {rate:,.2f} IDR",
+            parse_mode="Markdown",
+        )
+    else:
+        await waiting_msg.edit_text("❌ Gagal mengambil kurs USD.")
+
+
+async def kurs_idr_usd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    text = update.message.text
+    args = text.split()
+
+    if len(args) < 2:
+        await update.message.reply_text("Gunakan: /kursidrusd <nominal_IDR>")
+        return
+
+    try:
+        amt = float(args[1])
+    except ValueError:
+        await update.message.reply_text("Gunakan: /kursidrusd <nominal_IDR>")
+        return
+
+    logger.info(
+        f"[📥 /kursidrusd] {user.full_name} ({user.id}) meminta konversi {amt} IDR → USD"
+    )
+
+    waiting_msg = await update.message.reply_text("🔄 Mohon tunggu, menghitung...")
+
+    rate = get_rate("idr", "usd")
+    if rate:
+        hasil = amt * rate
+        await waiting_msg.delete()
+        logger.info(f"[✅ RESP] {amt:.0f} IDR = {hasil:,.2f} USD dikirim ke {user.id}")
+        await update.message.reply_text(
+            f"*💱 KURS IDR → USD*\n\n🇮🇩 {amt:.0f} IDR = 🇺🇸 {hasil:,.2f} USD\n\n"
+            f"📌 1 IDR = {rate:,.4f} USD",
+            parse_mode="Markdown",
+        )
+    else:
+        await waiting_msg.edit_text("❌ Gagal mengambil kurs USD.")

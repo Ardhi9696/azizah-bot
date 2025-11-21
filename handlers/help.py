@@ -35,6 +35,9 @@ Contoh: `/tanya Siapa presiden Korea?`
 /kurs – Tampilkan kurs 1 KRW ke IDR  
 /kursidr [jumlah] – Konversi KRW → IDR  
 /kurswon [jumlah] – Konversi IDR → KRW  
+/kursusd [jumlah] – Konversi USD → IDR (default 1 USD jika kosong)  
+/kursidrusd [jumlah] – Konversi IDR → USD  
+Contoh: `/kursidr 10000`, `/kurswon 50000`, `/kursusd 10`, `/kursidrusd 150000`
 
 👥 *Fitur Grup & Moderasi*  
 /adminlist – Tampilkan daftar admin grup  

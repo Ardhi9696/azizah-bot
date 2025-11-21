@@ -10,6 +10,7 @@ from handlers.responder import simple_responder
 from handlers.tanya_meta import tanya_meta
 from handlers.get_link import link_command
 from handlers.get_kurs import kurs_default, kurs_idr, kurs_won
+from handlers.get_kurs import kurs_usd, kurs_idr_usd
 from handlers.rules import show_rules
 from handlers.welcome import welcome_new_member
 from handlers.get_reg import get_reg
@@ -60,6 +61,8 @@ def register_handlers(app: Application):
     app.add_handler(CommandHandler("kurs", with_cooldown(kurs_default)))
     app.add_handler(CommandHandler("kursidr", with_cooldown(kurs_idr)))
     app.add_handler(CommandHandler("kurswon", with_cooldown(kurs_won)))
+    app.add_handler(CommandHandler("kursusd", with_cooldown(kurs_usd)))
+    app.add_handler(CommandHandler("kursidrusd", with_cooldown(kurs_idr_usd)))
     app.add_handler(CommandHandler("rules", with_cooldown(show_rules)))
     app.add_handler(CommandHandler("ban", with_cooldown(cmd_ban)))
     app.add_handler(CommandHandler("unban", with_cooldown(cmd_unban)))
