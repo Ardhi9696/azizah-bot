@@ -93,15 +93,6 @@ async def error_handler_function(update: Update, context: ContextTypes.DEFAULT_T
     logger.error("🚨 Terjadi error saat memproses update:", exc_info=context.error)
 
 
-# ===== Perintah /id untuk cek chat ID =====
-async def get_chat_id(update, context):
-    chat_id = update.effective_chat.id
-    thread_id = update.message.message_thread_id
-    await update.message.reply_text(
-        f"📌 Chat ID: `{chat_id}`\n🧵 Thread ID: `{thread_id}`", parse_mode="Markdown"
-    )
-
-
 # ===== Main Program =====
 def main():
     application = Application.builder().token(TOKEN).build()
