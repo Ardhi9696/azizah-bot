@@ -5,7 +5,7 @@ Bot Telegram untuk komunitas EPS-TOPIK Indonesia, dilengkapi dengan:
 - 🔐 Sistem verifikasi member baru (auto kick jika tidak menyetujui aturan)
 - ⚔️ Moderasi otomatis (kata terlarang, kasar, topik sensitif)
 - 👮‍♂️ Admin tools (mute, ban, unban, cek strike)
-- 📅 Pengambilan data EPS Korea (jadwal, pengumuman, dll)
+- 📅 Pengambilan data EPS Korea ringan (jadwal/pengumuman via HTTP, tanpa Playwright/Selenium)
 
 ---
 

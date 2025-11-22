@@ -1,4 +1,3 @@
-import os
 import logging
 from telegram import Update
 from logging.handlers import TimedRotatingFileHandler
@@ -10,11 +9,6 @@ from telegram.ext import (
 )
 
 from handlers.register_handlers import register_handlers
-
-DISABLE_HEAVY = os.getenv("DISABLE_HEAVY", "").lower() == "1"
-
-if not DISABLE_HEAVY:
-    from handlers_heavy.eps_core.browser import setup_browser
 
 
 logger = logging.getLogger()
@@ -114,26 +108,6 @@ def main():
 
     # === Register Handlers ===
     register_handlers(application)
-
-    if not DISABLE_HEAVY:
-        # === Warm-up Playwright browser once shortly after startup ===
-        async def _warmup_browser(context: ContextTypes.DEFAULT_TYPE):
-            try:
-                logger.info("[WARMUP] Starting browser warm-up task")
-                browser, context_obj, page = await setup_browser(profile_name="_warmup")
-                try:
-                    await page.close()
-                except Exception:
-                    pass
-                try:
-                    await context_obj.close()
-                except Exception:
-                    pass
-                logger.info("[WARMUP] Browser warm-up completed")
-            except Exception as e:
-                logger.debug(f"[WARMUP] Warm-up error: {e}")
-
-        application.job_queue.run_once(_warmup_browser, when=1)
 
     logger.info("✅ Azizah_Bot aktif dan siap digunakan.")
     application.run_polling()
