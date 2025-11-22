@@ -2,25 +2,49 @@
   "pendaftaran": [
     {
       "type": "CBT",
-      "title": "The 11th recruitment of the point system in Vietnam(Fishery)_Danang(5th)",
-      "nation": "Vietnam",
-      "period": "2025-08-13 ~ 2025-08-15",
+      "title": "The 4th recruitment of the Point system in Nepal_Agriculture and Livestock(2)",
+      "nation": "Nepal",
+      "period": "2025-08-11 ~ 2025-08-16",
       "test_date": "Undecided",
       "result_date": "Undecided"
     },
     {
       "type": "CBT",
-      "title": "태국 UBT 테스트",
-      "nation": "Thailand",
-      "period": "Undecided",
+      "title": "The 4th recruitment of the Point system in Nepal_Manufacturing(2)",
+      "nation": "Nepal",
+      "period": "2025-08-11 ~ 2025-08-16",
       "test_date": "Undecided",
       "result_date": "Undecided"
+    },
+    {
+      "type": "CBT",
+      "title": "The 10th recruitment of the point system in Sri lanka(fishery)",
+      "nation": "Sri Lanka",
+      "period": "2025-09-15 ~ 2025-09-17",
+      "test_date": "Undecided",
+      "result_date": "Undecided"
+    },
+    {
+      "type": "CBT",
+      "title": "The 11th recruitment of the point system in Vietnam(Fishery)_Danang(5th)",
+      "nation": "Vietnam",
+      "period": "2025-08-13 ~ 2025-08-15",
+      "test_date": "2025-09-29 ~ ..",
+      "result_date": "2025-10-24"
     },
     {
       "type": "CBT",
       "title": "2025 Special EPS-TOPIK in Thailand",
       "nation": "Thailand",
-      "period": "Undecided",
+      "period": "2025-10-16 ~ 2025-10-19",
+      "test_date": "2025-11-15 ~ ..",
+      "result_date": "2025-12-08"
+    },
+    {
+      "type": "CBT",
+      "title": "The 10th recruitment of the point system in Sri lanka(Manufacturing)",
+      "nation": "Sri Lanka",
+      "period": "2025-09-15 ~ 2025-09-17",
       "test_date": "Undecided",
       "result_date": "Undecided"
     },
@@ -50,11 +74,11 @@
     },
     {
       "type": "CBT",
-      "title": "The 10th recruitment of the point system in Mongolia (Manufacturing_5th)",
-      "nation": "Mongolia",
-      "period": "2025-06-23 ~ 2025-06-25",
-      "test_date": "2025-09-16 ~ ..",
-      "result_date": "2025-09-30"
+      "title": "2025 Skilled Workers Specialized in Root Industry Occupation in SriLanka(2nd)_Welding",
+      "nation": "Sri Lanka",
+      "period": "Undecided",
+      "test_date": "Undecided",
+      "result_date": "Undecided"
     }
   ]
 }

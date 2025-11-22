@@ -1,8 +1,26 @@
 {
   "jadwal": [
     {
+      "nation": "Uzbekistan",
+      "title": "2025 Skilled Workers Specialized in Root Industry Occupation in Uzbekistan(2nd)_Welding",
+      "type": "General (CBT)",
+      "announcement_date": "Undecided"
+    },
+    {
       "nation": "Nepal",
       "title": "The 4th recruitment of the Point system in Nepal_Manufacturing(2)",
+      "type": "General (CBT)",
+      "announcement_date": "2025-11-10"
+    },
+    {
+      "nation": "Thailand",
+      "title": "2025 Special EPS-TOPIK in Thailand",
+      "type": "Special (CBT)",
+      "announcement_date": "2025-11-10"
+    },
+    {
+      "nation": "Uzbekistan",
+      "title": "2025 Skilled Workers Specialized in Root Industry Occupation in Uzbekistan(1st)_Welding",
       "type": "General (CBT)",
       "announcement_date": "Undecided"
     },
@@ -10,43 +28,37 @@
       "nation": "Nepal",
       "title": "The 4th recruitment of the Point system in Nepal_Manufacturing",
       "type": "General (CBT)",
+      "announcement_date": "2025-11-10"
+    },
+    {
+      "nation": "Sri Lanka",
+      "title": "2025 Skilled Workers Specialized in Root Industry Occupation in SriLanka(1st)_Welding",
+      "type": "General (CBT)",
       "announcement_date": "Undecided"
+    },
+    {
+      "nation": "Pakistan",
+      "title": "2025 Skilled Workers Specialized in Root Industry Occupation in Pakistan(2nd)_Mold",
+      "type": "General (CBT)",
+      "announcement_date": "2025-11-02"
+    },
+    {
+      "nation": "Pakistan",
+      "title": "2025 Skilled Workers Specialized in Root Industry Occupation in Pakistan(2nd)_Welding",
+      "type": "General (CBT)",
+      "announcement_date": "2025-11-02"
     },
     {
       "nation": "Pakistan",
       "title": "2025 Skilled Workers Specialized in Root Industry Occupation in Pakistan(1st)_Welding",
       "type": "General (CBT)",
-      "announcement_date": "Undecided"
+      "announcement_date": "2025-10-23"
     },
     {
       "nation": "Pakistan",
       "title": "2025 Skilled Workers Specialized in Root Industry Occupation in Pakistan(1st)_Mold",
       "type": "General (CBT)",
-      "announcement_date": "Undecided"
-    },
-    {
-      "nation": "Cambodia",
-      "title": "2025 Skilled Workers Specialized in Root Industry Occupation in Cambodia(1st)_Welding",
-      "type": "General (CBT)",
-      "announcement_date": "Undecided"
-    },
-    {
-      "nation": "Indonesia",
-      "title": "2025 Skilled Workers Specialized in Root Industry Occupation in Indonesia(2nd)_Welding",
-      "type": "General (CBT)",
-      "announcement_date": "2025-10-16"
-    },
-    {
-      "nation": "Indonesia",
-      "title": "2025 Skilled Workers Specialized in Root Industry Occupation in Indonesia(1st)_Welding",
-      "type": "General (CBT)",
-      "announcement_date": "2025-10-16"
-    },
-    {
-      "nation": "Myanmar",
-      "title": "2025 Special EPS-TOPIK in Myanmar",
-      "type": "Special (CBT)",
-      "announcement_date": "2025-10-13"
+      "announcement_date": "2025-10-23"
     }
   ]
 }
