@@ -8,7 +8,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 📖 *Bantuan Bot EPS-TOPIK*  
 Semua perintah gabungan tiga bot di grup ini:
 
-🧪 *Azizah-Bot (grup)*  
+🧪 *Azizah-Bot (Responder)*  
 /jadwal – Jadwal pelaksanaan EPS-TOPIK  
 /reg – Jadwal pendaftaran EPS-TOPIK  
 /pass1 – Hasil Tahap 1 (UBT)  
@@ -20,17 +20,17 @@ Semua perintah gabungan tiga bot di grup ini:
 /kursusd [n] – USD → IDR, /kursidrusd – IDR → USD  
 /adminlist – Daftar admin grup, /cekstrike – Cek strike kamu
 
-🧩 *Nichanan-Bot (DM ke @Nichanan-Bot)*  
-/cek <nomor> – Cek hasil UBT EPS-TOPIK  
-/eps [USER PASS TGL] – Cek progres EPS (atau pakai akun tersimpan)  
+🧩 *Nichanan-Bot (Scrapper)*  
+/cek <no ujian 16digit> – Cek hasil UBT EPS-TOPIK  
+/eps [USER PASS TGL] – Cek progres EPS (Whitelist DM)  
 /tanya <pertanyaan> – Tanya Meta AI  
 *Gunakan di DM untuk keamanan kredensial.*
 
-🗒️ *Park-Min-Soo-Bot (catatan)*  
+🗒️ *Park-Min-Soo-Bot (Monitor)*  
 /list – Daftar catatan umum  
 /notes – Daftar catatan Korea  
 #hashtag – Lihat detail catatan  
-👑 Admin: /add, /update, /delete, /add_korea, /update_korea, /delete_korea
+👑 Admin: /add, /update, /delete, dll
 
 ⚠️ Admin Grup: /mute, /unmute, /ban, /unban, /restrike  
 🛡️ Owner: /resetstrikeall, /resetbanall
@@ -38,7 +38,7 @@ Semua perintah gabungan tiga bot di grup ini:
 📎 *Lainnya*  
 /help – Tampilkan bantuan ini  
 /link – Kumpulan link belajar Korea  
-/cek_id – Tampilkan ID chat dan thread
+/cekid – Tampilkan ID chat dan thread
 
 ✨ Moderasi aktif: anti spam command, filter kata kasar/topik sensitif, strike otomatis (ban setelah 3), auto mute.
 
