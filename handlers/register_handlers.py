@@ -1,13 +1,11 @@
 # register_handlers.py
+import os
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
 
 from handlers.command_wrapper import with_cooldown
-from handlers.cek_ujian import cek_ujian  # /cek (nomor ujian)
-from handlers.get_eps import eps_command  # /eps atau /e (progress EPS)
 from handlers.get_info import get_info
 from handlers.get_prelim import get_prelim
 from handlers.responder import simple_responder
-from handlers.tanya_meta import tanya_meta
 from handlers.get_link import link_command
 from handlers.get_kurs import kurs_default, kurs_idr, kurs_won
 from handlers.get_kurs import kurs_usd, kurs_idr_usd
@@ -34,6 +32,8 @@ from handlers.moderasi import (
     cmd_tambahkata,
 )
 
+DISABLE_HEAVY = os.getenv("DISABLE_HEAVY", "").lower() == "1"
+
 
 def register_handlers(app: Application):
     # === Command Handlers ===
@@ -48,8 +48,12 @@ def register_handlers(app: Application):
     )
     app.add_handler(CommandHandler("help", with_cooldown(help_command)))
     app.add_handler(CommandHandler("cek_id", with_cooldown(cek_id)))
-    app.add_handler(CommandHandler("cek", with_cooldown(cek_ujian)))
-    app.add_handler(CommandHandler(["eps", "e"], eps_command))  # HAPUS with_cooldown
+    if not DISABLE_HEAVY:
+        from handlers_heavy.cek_ujian import cek_ujian  # /cek (nomor ujian)
+        from handlers_heavy.get_eps import eps_command  # /eps atau /e (progress EPS)
+
+        app.add_handler(CommandHandler("cek", with_cooldown(cek_ujian)))
+        app.add_handler(CommandHandler(["eps", "e"], eps_command))  # HAPUS with_cooldown
     app.add_handler(CommandHandler("get", with_cooldown(get_info)))
     app.add_handler(CommandHandler("prelim", with_cooldown(get_prelim)))
     app.add_handler(CommandHandler("reg", with_cooldown(get_reg)))
@@ -57,7 +61,9 @@ def register_handlers(app: Application):
     app.add_handler(CommandHandler("pass1", with_cooldown(get_pass1)))
     app.add_handler(CommandHandler("pass2", with_cooldown(get_pass2)))
     app.add_handler(CommandHandler("link", with_cooldown(link_command)))
-    app.add_handler(CommandHandler("tanya", with_cooldown(tanya_meta)))
+    if not DISABLE_HEAVY:
+        from handlers_heavy.tanya_meta import tanya_meta
+        app.add_handler(CommandHandler("tanya", with_cooldown(tanya_meta)))
     app.add_handler(CommandHandler("kurs", with_cooldown(kurs_default)))
     app.add_handler(CommandHandler("kursidr", with_cooldown(kurs_idr)))
     app.add_handler(CommandHandler("kurswon", with_cooldown(kurs_won)))
