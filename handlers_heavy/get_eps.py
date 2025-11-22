@@ -12,13 +12,13 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 # --- EPS core (hanya yang dibutuhkan) ---
-from handlers.eps_core.session_manager import (
+from handlers_heavy.eps_core.session_manager import (
     with_session_async,
     with_session_sync_wrapper,
 )
-from handlers.eps_core.scraper import akses_progress
-from handlers.eps_core.formatter import format_data
-from handlers.eps_core.utils import normalize_birthday
+from handlers_heavy.eps_core.scraper import akses_progress
+from handlers_heavy.eps_core.formatter import format_data
+from handlers_heavy.eps_core.utils import normalize_birthday
 
 # --- Cache utils ---
 from handlers.cache_utils import (
