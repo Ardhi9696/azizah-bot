@@ -6,63 +6,41 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         """
 📖 *Bantuan Bot EPS-TOPIK*  
-Berikut daftar perintah yang tersedia:
+Semua perintah gabungan tiga bot di grup ini:
 
-🧪 *Ujian EPS-TOPIK*  (Azizah-Bot)  
-/jadwal [jumlah] – Cek *jadwal pelaksanaan* EPS-TOPIK  
-/reg [jumlah] – Cek *jadwal pendaftaran* EPS-TOPIK  
-/pass1 [jumlah] – Cek *hasil Tahap 1* (CBT)  
-/pass2 [jumlah] – Cek *hasil Tahap Final* (lolos ke Korea)
+🧪 *Azizah-Bot (grup)*  
+/jadwal [n] – Jadwal pelaksanaan EPS-TOPIK  
+/reg [n] – Jadwal pendaftaran EPS-TOPIK  
+/pass1 [n] – Hasil Tahap 1 (CBT)  
+/pass2 [n] – Hasil Tahap Final (lolos ke Korea)  
+/get – Pengumuman terbaru G to G  
+/prelim – Info tahap prelim  
+/kurs – Kurs 1 KRW → IDR  
+/kursidr [n] – KRW → IDR, /kurswon [n] – IDR → KRW  
+/kursusd [n] – USD → IDR, /kursidrusd [n] – IDR → USD  
+/adminlist – Daftar admin grup, /cekstrike – Cek strike kamu
 
-📝 *Pengumuman G to G Korea*  (Azizah-Bot)  
-/get – Update pengumuman terbaru G to G  
-/prelim – Info tahap prelim (pra-keberangkatan)  
+🧩 *Nichanan-Bot (DM ke @Nichanan-Bot)*  
+/cek <nomor> – Cek hasil CBT EPS-TOPIK  
+/eps [USER PASS TGL] – Cek progres EPS (atau pakai akun tersimpan)  
+/tanya <pertanyaan> – Tanya Meta AI  
+*Gunakan di DM untuk keamanan kredensial.*
 
-🧩 *Command Nichanan-Bot (DM saja)*  
-/cek [nomor EPS] – Cek hasil CBT EPS-TOPIK  
-/eps [opsional USER PASS TGL] – Cek progres EPS dengan akun terdaftar/argumen  
-/tanya [pertanyaan] – Tanya Meta AI  
-*Catatan:* Jalankan perintah ini di DM ke @Nichanan-Bot untuk keamanan.
+🗒️ *Park-Min-Soo-Bot (catatan)*  
+/list – Daftar catatan umum  
+/notes – Daftar catatan Korea  
+#hashtag – Lihat detail catatan  
+👑 Admin: /add, /update, /delete, /add_korea, /update_korea, /delete_korea
 
-🗒️ *Catatan Park-Min-Soo-Bot*  
-/list – Lihat daftar catatan umum  
-/notes – Lihat catatan Korea  
-#hashtag – Lihat detail catatan (ketik di chat tanpa slash)  
-👑 Admin saja: /add, /update, /delete, /add_korea, /update_korea, /delete_korea
-
-💱 *Kurs Mata Uang*  
-/kurs – Tampilkan kurs 1 KRW ke IDR  
-/kursidr [jumlah] – Konversi KRW → IDR  
-/kurswon [jumlah] – Konversi IDR → KRW  
-/kursusd [jumlah] – Konversi USD → IDR (default 1 USD jika kosong)  
-/kursidrusd [jumlah] – Konversi IDR → USD  
-Contoh: `/kursidr 10000`, `/kurswon 50000`, `/kursusd 10`, `/kursidrusd 150000`
-
-👥 *Fitur Grup & Moderasi*  
-/adminlist – Tampilkan daftar admin grup  
-/cekstrike – Cek strike kamu saat ini
-
-⚠️ Admin Saja:  
-/mute (reply) – Mute pengguna  
-/unmute (reply) – Unmute pengguna  
-/ban (reply) – Ban pengguna  
-/unban (reply) – Unban pengguna  
-/restrike (reply) – Reset strike user  
-
-🛡️ Owner Saja:  
-/resetstrikeall – Reset semua strike  
-/resetbanall – Hapus semua banned user
+⚠️ Admin Grup: /mute, /unmute, /ban, /unban, /restrike  
+🛡️ Owner: /resetstrikeall, /resetbanall
 
 📎 *Lainnya*  
 /help – Tampilkan bantuan ini  
 /link – Kumpulan link belajar Korea  
 /cek_id – Tampilkan ID chat dan thread
 
-✨ Bot ini dilengkapi sistem moderasi:  
-• Anti spam command  
-• Filter kata kasar, topik sensitif  
-• Strike otomatis (ban setelah 3 pelanggaran)  
-• Auto mute jika melanggar
+✨ Moderasi aktif: anti spam command, filter kata kasar/topik sensitif, strike otomatis (ban setelah 3), auto mute.
 
 💌 Powered by: *LeeBot EPS-TOPIK* 🇰🇷🇮🇩
         """,
