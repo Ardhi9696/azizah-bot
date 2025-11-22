@@ -119,7 +119,12 @@ def main():
             except Exception as e:
                 logger.warning(f"Gagal kirim notifikasi startup: {e}")
 
-        application.job_queue.run_once(_notify_startup, when=0)
+        application.job_queue.run_once(
+            _notify_startup,
+            when=1,  # jadwalkan sedikit di depan supaya scheduler sudah siap
+            name="startup-notify",
+            job_kwargs={"misfire_grace_time": 30},
+        )
     else:
         logger.warning("MY_TELEGRAM_ID tidak diset; lewati notifikasi startup.")
 
