@@ -17,7 +17,7 @@ async def cek_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
     thread_id = getattr(message, "message_thread_id", None)
 
     logger.info(
-        f"User {uid} memanggil /cek_id (username={uname}, chat_type={ctype}, chat_id={chat_id}, thread_id={thread_id})"
+        f"User {uid} memanggil /cekid (username={uname}, chat_type={ctype}, chat_id={chat_id}, thread_id={thread_id})"
     )
 
     thread_label = (

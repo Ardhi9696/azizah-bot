@@ -44,7 +44,7 @@ def register_handlers(app: Application):
         group=0,
     )
     app.add_handler(CommandHandler("help", with_cooldown(help_command)))
-    app.add_handler(CommandHandler("cek_id", with_cooldown(cek_id)))
+    app.add_handler(CommandHandler("cekid", with_cooldown(cek_id)))
     app.add_handler(CommandHandler("get", with_cooldown(get_info)))
     app.add_handler(CommandHandler("prelim", with_cooldown(get_prelim)))
     app.add_handler(CommandHandler("reg", with_cooldown(get_reg)))
