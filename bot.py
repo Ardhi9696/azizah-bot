@@ -87,6 +87,11 @@ TOKEN = os.getenv("BOT_TOKEN")
 if not TOKEN:
     logger.critical("❌ BOT_TOKEN tidak ditemukan di .env. Keluar.")
     exit(1)
+OWNER_ID_RAW = os.getenv("MY_TELEGRAM_ID", "")
+try:
+    OWNER_ID = int(OWNER_ID_RAW) if OWNER_ID_RAW else None
+except ValueError:
+    OWNER_ID = None
 
 
 async def error_handler_function(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -100,6 +105,23 @@ def main():
 
     # === Register Handlers ===
     register_handlers(application)
+
+    # === Kirim notifikasi startup ke owner (DM) ===
+    if OWNER_ID:
+
+        async def _notify_startup(context: ContextTypes.DEFAULT_TYPE):
+            try:
+                await context.bot.send_message(
+                    chat_id=OWNER_ID,
+                    text="✅ Azizah-Bot sudah aktif dan siap digunakan.",
+                )
+                logger.info("Notifikasi startup terkirim ke owner.")
+            except Exception as e:
+                logger.warning(f"Gagal kirim notifikasi startup: {e}")
+
+        application.job_queue.run_once(_notify_startup, when=0)
+    else:
+        logger.warning("MY_TELEGRAM_ID tidak diset; lewati notifikasi startup.")
 
     logger.info("✅ Azizah_Bot aktif dan siap digunakan.")
     application.run_polling()
