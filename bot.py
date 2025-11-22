@@ -55,13 +55,13 @@ else:
 
 # Log ke file harian
 file_handler = TimedRotatingFileHandler(
-    "logs/log.txt", when="midnight", backupCount=7, encoding="utf-8"
+    LOG_PATH, when="midnight", backupCount=7, encoding="utf-8"
 )
 file_handler.setFormatter(file_formatter)
 logger.addHandler(file_handler)
 
 # Log error khusus
-error_handler = logging.FileHandler("logs/error.log", mode="a", encoding="utf-8")
+error_handler = logging.FileHandler(ERROR_LOG_PATH, mode="a", encoding="utf-8")
 error_handler.setLevel(logging.ERROR)
 error_handler.setFormatter(file_formatter)
 logger.addHandler(error_handler)
