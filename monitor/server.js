@@ -155,6 +155,22 @@ function renderDashboard(res, initialStats) {
       body { padding: 16px; }
       h1 { font-size: 22px; }
     }
+    .bar {
+      width: 100%;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      height: 10px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+    .bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #38bdf8, #34d399);
+      transition: width 200ms ease;
+    }
+    .bar-fill.danger { background: linear-gradient(90deg, #f43f5e, #f59e0b); }
   </style>
 </head>
 <body>
@@ -173,18 +189,21 @@ function renderDashboard(res, initialStats) {
         <div class="value" id="cpu-usage">–</div>
         <div class="muted">Temperatur: <span id="cpu-temp">–</span></div>
         <div class="muted">Auto update setiap beberapa detik.</div>
+        <div class="bar"><div class="bar-fill" id="bar-cpu"></div></div>
       </div>
 
       <div class="card">
         <h2>🧠 Memory</h2>
         <div class="value" id="ram-usage">–</div>
         <div class="muted" id="ram-detail">–</div>
+        <div class="bar"><div class="bar-fill" id="bar-ram"></div></div>
       </div>
 
       <div class="card">
         <h2>💾 Storage</h2>
         <div class="value" id="disk-usage">–</div>
         <div class="muted" id="disk-detail">–</div>
+        <div class="bar"><div class="bar-fill" id="bar-disk"></div></div>
       </div>
 
       <div class="card">
@@ -198,11 +217,11 @@ function renderDashboard(res, initialStats) {
       <div class="card">
         <h2>📱 Device Overview</h2>
         <ul class="spec-list">
-          <li><b>Device:</b> Android TV Box (askey B860H V5.0)</li>
+          <li><b>Device:</b> Android TV Box (ZTE B860H V5.0)</li>
           <li><b>OS:</b> Android 12 (API Level 31)</li>
           <li><b>Arch:</b> ARMv8l (64-bit)</li>
           <li><span class="tag">Uptime</span> <span id="overview-uptime">-</span></li>
-          <li><span class="tag">IP</span> 192.168.1.58 (eth0)</li>
+          <li><span class="tag">IP</span> 192.168.1.xx</li>
         </ul>
       </div>
 
@@ -211,10 +230,9 @@ function renderDashboard(res, initialStats) {
         <ul class="spec-list">
           <li><b>CPU:</b> AMLogic S905X2 · 4x Cortex-A53 @ 1.80 GHz</li>
           <li><b>GPU:</b> Mali-G31 MP2 (Integrated)</li>
-          <li><b>RAM:</b> 1.89 GiB total · 51% dipakai (~1 GiB sisa)</li>
-          <li><b>Storage:</b> Internal 1.14 GiB (85% used)</li>
-          <li><b>Ext/Emu:</b> 3.66 GiB total (2.30 GiB free)</li>
-          <li><b>Swap:</b> 384 MiB (0.2% used)</li>
+          <li><b>RAM:</b> 2 GB total</li>
+          <li><b>Storage:</b> Internal 4 GB total</li>
+          <li><b>Swap:</b> 400 MB</li>
         </ul>
       </div>
 
@@ -280,11 +298,21 @@ function renderDashboard(res, initialStats) {
     function updateUI(data) {
       state.stats = data;
       document.getElementById("cpu-usage").textContent = data.cpu === null ? "N/A" : data.cpu.toFixed(1) + "%";
+      const barCpu = document.getElementById("bar-cpu");
+      if (barCpu && data.cpu !== null) {
+        barCpu.style.width = Math.min(Math.max(data.cpu, 0), 100) + "%";
+        barCpu.classList.toggle("danger", data.cpu >= 85);
+      }
       document.getElementById("cpu-temp").textContent = data.temp === null ? "Tidak tersedia" : data.temp.toFixed(1) + "°C";
 
       if (data.ram) {
         document.getElementById("ram-usage").textContent = data.ram.percent.toFixed(1) + "%";
         document.getElementById("ram-detail").textContent = formatGb(data.ram.usedGb) + " / " + formatGb(data.ram.totalGb);
+        const barRam = document.getElementById("bar-ram");
+        if (barRam) {
+          barRam.style.width = Math.min(Math.max(data.ram.percent, 0), 100) + "%";
+          barRam.classList.toggle("danger", data.ram.percent >= 85);
+        }
       } else {
         document.getElementById("ram-usage").textContent = "N/A";
         document.getElementById("ram-detail").textContent = "Akses RAM dibatasi oleh OS";
@@ -296,6 +324,11 @@ function renderDashboard(res, initialStats) {
           ? "N/A"
           : diskPercent.toFixed(1) + "%";
         document.getElementById("disk-detail").textContent = formatGb(data.disk.usedGb) + " / " + formatGb(data.disk.totalGb);
+        const barDisk = document.getElementById("bar-disk");
+        if (barDisk && diskPercent !== null && diskPercent !== undefined) {
+          barDisk.style.width = Math.min(Math.max(diskPercent, 0), 100) + "%";
+          barDisk.classList.toggle("danger", diskPercent >= 85);
+        }
       } else {
         document.getElementById("disk-usage").textContent = "N/A";
         document.getElementById("disk-detail").textContent = "Akses disk dibatasi";
