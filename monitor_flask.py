@@ -141,13 +141,26 @@ def dashboard():
             <p class="muted">Auto refresh setiap 5 detik</p>
         </div>
 
-        <div class="card">
+                <div class="card">
             <h2>🤖 Bot Control</h2>
             <p><b>Status:</b> {bot_status_text}</p>
-            <a class="btn" href="/bot/start">Start</a>
-            <a class="btn btn-danger" href="/bot/stop">Stop</a>
-            <a class="btn" href="/bot/restart">Restart</a>
+            <a class="btn"
+               href="/bot/start"
+               onclick="return confirm('Mulai bot sekarang?');">
+               Start
+            </a>
+            <a class="btn btn-danger"
+               href="/bot/stop"
+               onclick="return confirm('Yakin ingin menghentikan bot? Bot akan berhenti menerima pesan.');">
+               Stop
+            </a>
+            <a class="btn"
+               href="/bot/restart"
+               onclick="return confirm('Restart bot sekarang? Bot akan dimatikan lalu dinyalakan ulang.');">
+               Restart
+            </a>
         </div>
+
 
         <div class="card">
             <h2>🔔 Alerts</h2>
