@@ -11,14 +11,7 @@ TMUX="/data/data/com.termux/files/usr/bin/tmux"
 NODE="/data/data/com.termux/files/usr/bin/node"
 PYTHON="/data/data/com.termux/files/usr/bin/python3"
 BOT_DIR="/data/data/com.termux/files/home/Azizah-Bot"
-TMUX_TMPDIR="/data/data/com.termux/files/home/.tmux-shared"
-TMUX_SOCKET="$TMUX_TMPDIR/telebot.sock"
-
-# Siapkan socket tmux bersama (akses user & root)
-mkdir -p "$TMUX_TMPDIR"
-chmod 777 "$TMUX_TMPDIR"
-export TMUX_TMPDIR
-rm -f "$TMUX_SOCKET" 2>/dev/null
+MONITOR_LOG="$BOT_DIR/monitor_root.log"
 
 # Get IP
 IP=$(ip -4 addr show eth0 2>/dev/null | awk '/inet /{print $2}' | cut -d/ -f1)
@@ -52,22 +45,21 @@ MEM_USED=$(free -m | awk '/Mem/{print $3}')
 # Storage info
 STORAGE_FREE=$(df -h /data | awk 'NR==2{print $4}')
 
-# TMUX SESSION (bot)
-$TMUX -S "$TMUX_SOCKET" has-session -t telebot 2>/dev/null
+# TMUX SESSION (bot) - user biasa
+$TMUX has-session -t telebot 2>/dev/null
 SESSION_EXISTS=$?
 
 # Start bot if not exists
 if [ $SESSION_EXISTS != 0 ]; then
-  $TMUX -S "$TMUX_SOCKET" new-session -d -s telebot "cd $BOT_DIR && git pull && $PYTHON run.py"
+  $TMUX new-session -d -s telebot "cd $BOT_DIR && git pull && $PYTHON run.py"
   BOT_STATUS="Started"
 else
   BOT_STATUS="Already Running"
 fi
-[ -S "$TMUX_SOCKET" ] && chmod 777 "$TMUX_SOCKET"
 
-# 🤖 Start MONITOR Node.js di tmux ROOT (session: monitor) setelah socket dibuat oleh user tmux
-su -c "TMUX_TMPDIR=$TMUX_TMPDIR TMUX_SOCKET=$TMUX_SOCKET $TMUX -S $TMUX_SOCKET has-session -t monitor 2>/dev/null || \
-       TMUX_TMPDIR=$TMUX_TMPDIR TMUX_SOCKET=$TMUX_SOCKET $TMUX -S $TMUX_SOCKET new-session -d -s monitor \"cd $BOT_DIR && TMUX_SOCKET=$TMUX_SOCKET $NODE monitor_server.js\""
+# 🤖 Start MONITOR Node.js di tmux ROOT (session: monitor) untuk akses sensor
+su -c "$TMUX has-session -t monitor 2>/dev/null || \
+       $TMUX new-session -d -s monitor \"cd $BOT_DIR && $NODE monitor_server.js >> $MONITOR_LOG 2>&1\""
 
 # Telegram message
 TEXT="💡 <b>STB Baru Menyala</b>

@@ -516,7 +516,7 @@ function renderDashboard(res, initialStats) {
         } catch (err) {
           console.error("Polling failed", err);
         }
-      }, 4000);
+      }, 2000);
     }
 
     document.getElementById("btn-toggle-alert").onclick = () => {
@@ -629,4 +629,4 @@ setInterval(() => {
   const stats = buildStats();
   broadcastStats(stats);
   maybeSendAlerts(stats);
-}, 4000);
+}, 1000);
