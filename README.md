@@ -26,6 +26,11 @@ Bisa juga untuk cek akun EPS
 
 - Jalankan dengan `node monitor_server.js` (port default 8000). Pastikan Node.js 18+ terpasang.
 - Dashboard akan otomatis hot-reload data via SSE/polling tanpa perlu refresh halaman.
-- Untuk menjaga agar tetap hidup di Termux/root, pakai `start_monitor_root.sh` (tmux session `monitor`).
+- Jika monitor perlu akses sensor (harus root), jalankan monitor dengan `TMUX_SOCKET` menunjuk ke socket tmux milik user bot, misal di `start_monitor_root.sh`:
+  ```
+  TMUX_SOCKET=/data/data/com.termux/files/usr/tmp/tmux-XXXX/default
+  TMUX_SOCKET=$TMUX_SOCKET tmux new-session -d -s monitor "cd ~/Azizah-Bot && TMUX_SOCKET=$TMUX_SOCKET node monitor_server.js"
+  ```
+  (script ini sudah mencari socket otomatis; sesuaikan jika path berbeda)
 - Konfigurasi alert tersimpan di `monitor_config.json` (fallback di repo jika path Termux tidak ada).
 - Endpoint cepat: `/` dashboard, `/api/stats` JSON, `/api/stream` SSE feed, aksi bot di `/bot/start|stop|restart`.

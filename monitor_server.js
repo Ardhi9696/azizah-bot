@@ -14,6 +14,7 @@ const {
 } = require("./monitor_config");
 
 const PORT = process.env.MONITOR_PORT || 8000;
+const TMUX_SOCKET = process.env.TMUX_SOCKET || null;
 const SESSION_NAME = "telebot";
 const ALERT_COOLDOWN_SEC = 300; // 5 minutes
 
@@ -130,7 +131,11 @@ function getUptime() {
 
 function botIsRunning() {
   try {
-    const res = spawnSync(TMUX_BIN, ["has-session", "-t", SESSION_NAME], {
+    const args = [];
+    if (TMUX_SOCKET) args.push("-S", TMUX_SOCKET);
+    args.push("has-session", "-t", SESSION_NAME);
+
+    const res = spawnSync(TMUX_BIN, args, {
       stdio: "ignore",
     });
     return res.status === 0;
@@ -146,13 +151,16 @@ function botStart() {
   }
   try {
     const cmd = `cd ${BOT_DIR} && ${BOT_COMMAND}`;
-    const res = spawnSync(TMUX_BIN, [
+    const args = [];
+    if (TMUX_SOCKET) args.push("-S", TMUX_SOCKET);
+    args.push(
       "new-session",
       "-d",
       "-s",
       SESSION_NAME,
-      cmd,
-    ]);
+      cmd
+    );
+    const res = spawnSync(TMUX_BIN, args);
     if (res.status === 0) {
       return { ok: true, message: "Bot dimulai di tmux session." };
     }
@@ -167,9 +175,11 @@ function botStop() {
     return { ok: true, message: "Bot sudah mati." };
   }
   try {
-    const res = spawnSync(TMUX_BIN, ["kill-session", "-t", SESSION_NAME], {
-      stdio: "ignore",
-    });
+    const args = [];
+    if (TMUX_SOCKET) args.push("-S", TMUX_SOCKET);
+    args.push("kill-session", "-t", SESSION_NAME);
+
+    const res = spawnSync(TMUX_BIN, args, { stdio: "ignore" });
     if (res.status === 0) {
       return { ok: true, message: "Bot berhasil dihentikan." };
     }
