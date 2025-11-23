@@ -24,11 +24,11 @@ Bisa juga untuk cek akun EPS
 
 ## 🖥️ Monitoring Dashboard (Node.js)
 
-- Jalankan dengan `node monitor_server.js` (port default 8000). Pastikan Node.js 18+ terpasang.
+- Jalankan dengan `node monitor/server.js` (port default 8000). Pastikan Node.js 18+ terpasang.
 - Dashboard auto hot-reload data via SSE/polling; hanya monitoring (tidak ada kontrol bot).
 - Untuk akses sensor penuh, jalankan monitor sebagai root (misal tmux root via `start_monitor_root.sh`).
 - Bot tetap dijalankan sebagai user biasa (tmux session `telebot`), terpisah dari monitor.
-- Konfigurasi tersimpan di `monitor_config.json` (Termux home, fallback di repo):
+- Konfigurasi tersimpan di `monitor_config.json` (Termux home, fallback di `monitor/monitor_config.json`):
   - `alerts_enabled`: true/false untuk kirim notifikasi (suhu, RAM, storage) via Telegram.
   - `ram_threshold`, `temp_threshold`, `storage_threshold`: angka persen/derajat.
   - `polling_interval_sec`: 1–10 (default 3) untuk interval update SSE/polling.

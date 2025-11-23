@@ -66,7 +66,7 @@ fi
 
 # 🤖 Start MONITOR Node.js di tmux ROOT (session: monitor) untuk akses sensor
 su -c "$TMUX has-session -t monitor 2>/dev/null || \
-       $TMUX new-session -d -s monitor \"cd $BOT_DIR && $NODE monitor_server.js >> $MONITOR_LOG 2>&1\""
+       $TMUX new-session -d -s monitor \"cd $BOT_DIR && $NODE monitor/server.js >> $MONITOR_LOG 2>&1\""
 
 # Telegram message
 TEXT="💡 <b>STB Baru Menyala</b>

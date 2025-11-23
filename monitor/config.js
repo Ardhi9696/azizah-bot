@@ -3,20 +3,20 @@ const path = require("path");
 
 const TERMUX_HOME = "/data/data/com.termux/files/home";
 
-// Telegram credentials (was used for alerts; alerts toggle kini dimatikan)
+// Telegram credentials (untuk alert)
 const TELEGRAM_BOT_TOKEN = "7777245606:AAEo9fS7AH7Of9DSngYPEtfECS1Hbmh2j9Q";
 const TELEGRAM_CHAT_ID = "7088612068";
 
-// File config alert (tetap disimpan untuk threshold, walau toggle off)
+// File config alert (toggle, threshold, interval)
 const CONFIG_FILE = path.join(TERMUX_HOME, "monitor_config.json");
 const LOCAL_CONFIG_FILE = path.join(__dirname, "monitor_config.json");
 
 const DEFAULT_CONFIG = {
-  alerts_enabled: true,      // kirim notifikasi jika melewati threshold
-  ram_threshold: 90,         // persen
-  temp_threshold: 75,        // derajat C
-  storage_threshold: 90,     // persen penggunaan storage
-  polling_interval_sec: 3,   // interval update dashboard (1-10 detik)
+  alerts_enabled: true,
+  ram_threshold: 90, // persen
+  temp_threshold: 75, // derajat C
+  storage_threshold: 90, // persen
+  polling_interval_sec: 3, // 1–10 detik
 };
 
 function safeReadJson(filePath) {
@@ -46,7 +46,6 @@ function loadConfig() {
 function saveConfig(nextConfig) {
   const payload = { ...DEFAULT_CONFIG, ...nextConfig };
   const targets = [CONFIG_FILE, LOCAL_CONFIG_FILE];
-
   for (const file of targets) {
     try {
       fs.writeFileSync(file, JSON.stringify(payload));

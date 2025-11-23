@@ -1,240 +1,18 @@
 const http = require("http");
-const { execFileSync } = require("child_process");
-const fs = require("fs");
-const os = require("os");
 const { randomUUID } = require("crypto");
-const {
-  TELEGRAM_BOT_TOKEN,
-  TELEGRAM_CHAT_ID,
-  loadConfig,
-  saveConfig,
-} = require("./monitor_config");
+
+const { buildStats, primeCpu } = require("./stats");
+const { maybeSendAlerts } = require("./alerts");
+const { loadConfig } = require("./config");
 
 const PORT = process.env.MONITOR_PORT || 8000;
-const ALERT_COOLDOWN_SEC = 300; // 5 minutes
 
 // In-memory state
 let config = loadConfig();
-let lastCpuTimes = null;
-let lastRamAlert = 0;
-let lastTempAlert = 0;
-let lastDiskAlert = 0;
 const sseClients = new Map(); // id -> response
 
 // Prime CPU reading so the first response is not empty.
-getCpuPercent();
-
-function readCpuTimes() {
-  try {
-    const stat = fs.readFileSync("/proc/stat", "utf8");
-    const line = stat
-      .split("\n")
-      .find((row) => row.startsWith("cpu "))?.trim();
-    if (!line) return null;
-    const parts = line.split(/\s+/).slice(1).map(Number);
-    const [user, nice, system, idle, iowait, irq, softirq, steal] = parts;
-    const idleAll = idle + iowait;
-    const nonIdle = user + nice + system + irq + softirq + steal;
-    return { idle: idleAll, total: idleAll + nonIdle };
-  } catch (err) {
-    console.warn("[stats] Unable to read /proc/stat", err.message);
-    return null;
-  }
-}
-
-function getCpuPercent() {
-  const current = readCpuTimes();
-  if (!current) return null;
-  if (!lastCpuTimes) {
-    lastCpuTimes = current;
-    return null; // need a delta to compute usage
-  }
-  const totalDiff = current.total - lastCpuTimes.total;
-  const idleDiff = current.idle - lastCpuTimes.idle;
-  lastCpuTimes = current;
-  if (totalDiff <= 0) return null;
-  const usage = ((totalDiff - idleDiff) / totalDiff) * 100;
-  return Number(usage.toFixed(1));
-}
-
-function getTemp() {
-  const candidates = [
-    "/sys/class/thermal/thermal_zone0/temp",
-    "/sys/devices/virtual/thermal/thermal_zone0/temp",
-  ];
-  for (const file of candidates) {
-    try {
-      if (fs.existsSync(file)) {
-        const raw = fs.readFileSync(file, "utf8").trim();
-        const val = Number(raw) / 1000;
-        if (!Number.isNaN(val)) {
-          return Number(val.toFixed(1));
-        }
-      }
-    } catch (err) {
-      console.warn("[stats] Temp read failed", err.message);
-    }
-  }
-  return null;
-}
-
-function getRamStats() {
-  try {
-    const total = os.totalmem();
-    const free = os.freemem();
-    const used = total - free;
-    const percent = (used / total) * 100;
-    return {
-      total,
-      used,
-      percent: Number(percent.toFixed(1)),
-    };
-  } catch (err) {
-    console.warn("[stats] RAM read failed", err.message);
-    return null;
-  }
-}
-
-function getDiskStats() {
-  try {
-    const output = execFileSync("df", ["-k", "/"], { encoding: "utf8" });
-    const [, dataLine] = output.trim().split("\n");
-    if (!dataLine) return null;
-    const parts = dataLine.trim().split(/\s+/);
-    const totalKb = Number(parts[1]);
-    const usedKb = Number(parts[2]);
-    const percentStr = parts[4] || "";
-    const percent = Number(percentStr.replace("%", ""));
-    return {
-      total: totalKb * 1024,
-      used: usedKb * 1024,
-      percent: Number.isNaN(percent) ? null : percent,
-    };
-  } catch (err) {
-    console.warn("[stats] Disk read failed", err.message);
-    return null;
-  }
-}
-
-function getUptime() {
-  try {
-    return os.uptime();
-  } catch (err) {
-    console.warn("[stats] Uptime read failed", err.message);
-    return null;
-  }
-}
-
-function formatBytesToGb(bytes) {
-  return Number((bytes / 1e9).toFixed(2));
-}
-
-function buildStats() {
-  const cpu = getCpuPercent();
-  const ram = getRamStats();
-  const disk = getDiskStats();
-  const uptimeSec = getUptime();
-  const temp = getTemp();
-
-  return {
-    cpu,
-    ram: ram
-      ? {
-          totalGb: formatBytesToGb(ram.total),
-          usedGb: formatBytesToGb(ram.used),
-          percent: ram.percent,
-        }
-      : null,
-    disk: disk
-      ? {
-          totalGb: formatBytesToGb(disk.total),
-          usedGb: formatBytesToGb(disk.used),
-          percent: disk.percent,
-        }
-      : null,
-    uptimeSec,
-    temp,
-    alertsEnabled: Boolean(config.alerts_enabled),
-    ramThreshold: config.ram_threshold,
-    tempThreshold: config.temp_threshold,
-    storageThreshold: config.storage_threshold,
-    ts: Date.now(),
-  };
-}
-
-async function sendTelegramMessage(text) {
-  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
-  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-  try {
-    const payload = JSON.stringify({
-      chat_id: TELEGRAM_CHAT_ID,
-      text,
-      parse_mode: "HTML",
-    });
-    await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: payload,
-    });
-  } catch (err) {
-    console.warn("[alert] Telegram send failed", err.message);
-  }
-}
-
-function maybeSendAlerts(stats) {
-  if (!config.alerts_enabled) return;
-  const now = Date.now() / 1000;
-
-  if (
-    stats.ram &&
-    stats.uptimeSec !== null &&
-    stats.ram.percent >= config.ram_threshold
-  ) {
-    if (now - lastRamAlert > ALERT_COOLDOWN_SEC) {
-      const msg = [
-        "🚨 <b>STB RAM ALERT</b>",
-        "",
-        `💾 RAM: <b>${stats.ram.percent.toFixed(1)}%</b>`,
-        `⏱ Uptime: ${(stats.uptimeSec / 3600).toFixed(2)} jam`,
-      ].join("\n");
-      sendTelegramMessage(msg);
-      lastRamAlert = now;
-    }
-  }
-
-  if (
-    stats.temp !== null &&
-    stats.uptimeSec !== null &&
-    stats.temp >= config.temp_threshold
-  ) {
-    if (now - lastTempAlert > ALERT_COOLDOWN_SEC) {
-      const msg = [
-        "🔥 <b>STB TEMPERATURE ALERT</b>",
-        "",
-        `🌡 Suhu CPU: <b>${stats.temp.toFixed(1)}°C</b>`,
-        `⏱ Uptime: ${(stats.uptimeSec / 3600).toFixed(2)} jam`,
-      ].join("\n");
-      sendTelegramMessage(msg);
-      lastTempAlert = now;
-    }
-  }
-
-  if (stats.disk && stats.disk.percent !== null) {
-    if (
-      stats.disk.percent >= config.storage_threshold &&
-      now - lastDiskAlert > ALERT_COOLDOWN_SEC
-    ) {
-      const msg = [
-        "💾 <b>STB STORAGE ALERT</b>",
-        "",
-        `📂 Storage: <b>${stats.disk.percent.toFixed(1)}%</b>`,
-        `⏱ Uptime: ${(stats.uptimeSec / 3600).toFixed(2)} jam`,
-      ].join("\n");
-      sendTelegramMessage(msg);
-      lastDiskAlert = now;
-    }
-  }
-}
+primeCpu();
 
 function handleJson(res, payload, status = 200) {
   res.writeHead(status, { "Content-Type": "application/json" });
@@ -530,7 +308,6 @@ function renderDashboard(res, initialStats) {
       document.getElementById("uptime-pill").textContent = "Uptime: " + formatUptime(data.uptimeSec);
       const overviewUptime = document.getElementById("overview-uptime");
       if (overviewUptime) overviewUptime.textContent = formatUptime(data.uptimeSec);
-
     }
 
     function startSSE() {
@@ -559,10 +336,11 @@ function renderDashboard(res, initialStats) {
       }, pollMs);
     }
 
-    document.getElementById("btn-toggle-alert").onclick = () => {
-      const enable = state.stats?.alertsEnabled ? 0 : 1;
-      callAction("/alerts/toggle?enable=" + enable);
-    };
+    function getIntervalMs() {
+      const cfgVal = Number(${JSON.stringify(config.polling_interval_sec)});
+      const sec = Number.isFinite(cfgVal) ? Math.min(Math.max(cfgVal, 1), 10) : 3;
+      return sec * 1000;
+    }
 
     updateUI(state.stats);
     startSSE();
@@ -596,31 +374,26 @@ function broadcastStats(stats) {
   }
 }
 
-function toggleAlerts(enable) {
-  const next = { ...config, alerts_enabled: enable };
-  try {
-    saveConfig(next);
-  } catch (err) {
-    console.warn("[config] Failed to persist alert toggle", err.message);
-  }
-  config = next;
-  return config;
-}
-
 function parseUrl(req) {
   return new URL(req.url, "http://localhost");
 }
 
-async function handleRequest(req, res) {
+function getIntervalMs() {
+  const cfgVal = Number(config.polling_interval_sec);
+  const sec = Number.isFinite(cfgVal) ? Math.min(Math.max(cfgVal, 1), 10) : 3;
+  return sec * 1000;
+}
+
+function handleRequest(req, res) {
   const url = parseUrl(req);
   if (req.method === "GET" && url.pathname === "/") {
-    const stats = buildStats();
+    const stats = buildStats(config);
     renderDashboard(res, stats);
     return;
   }
 
   if (req.method === "GET" && url.pathname === "/api/stats") {
-    const stats = buildStats();
+    const stats = buildStats(config);
     handleJson(res, stats);
     return;
   }
@@ -653,14 +426,8 @@ server.listen(PORT, () => {
 });
 
 // Push stats to SSE clients and evaluate alerts every few seconds (configurable 1-10s, default 3s).
-function getIntervalMs() {
-  const cfgVal = Number(config.polling_interval_sec);
-  const sec = Number.isFinite(cfgVal) ? Math.min(Math.max(cfgVal, 1), 10) : 3;
-  return sec * 1000;
-}
-
 setInterval(() => {
-  const stats = buildStats();
+  const stats = buildStats(config);
   broadcastStats(stats);
-  maybeSendAlerts(stats);
+  maybeSendAlerts(stats, config);
 }, getIntervalMs());
