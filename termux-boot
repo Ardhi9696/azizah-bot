@@ -1,0 +1,102 @@
+#!/data/data/com.termux/files/usr/bin/sh
+
+termux-wake-lock
+sleep 10
+
+# Start SSH Server
+sshd
+
+# Path binary Termux
+TMUX="/data/data/com.termux/files/usr/bin/tmux"
+NODE="/data/data/com.termux/files/usr/bin/node"
+PYTHON="/data/data/com.termux/files/usr/bin/python3"
+BOT_DIR="/data/data/com.termux/files/home/Azizah-Bot"
+TMUX_SOCKET="/data/data/com.termux/files/home/.tmux-shared/telebot.sock"
+
+# Siapkan socket tmux bersama (akses user & root)
+mkdir -p /data/data/com.termux/files/home/.tmux-shared
+chmod 777 /data/data/com.termux/files/home/.tmux-shared
+
+# 🤖 Start MONITOR Node.js di tmux ROOT (session: monitor) dengan TMUX_SOCKET shared
+su -c "TMUX_SOCKET=$TMUX_SOCKET $TMUX -S $TMUX_SOCKET has-session -t monitor 2>/dev/null || \
+       TMUX_SOCKET=$TMUX_SOCKET $TMUX -S $TMUX_SOCKET new-session -d -s monitor \"cd $BOT_DIR && TMUX_SOCKET=$TMUX_SOCKET $NODE monitor_server.js\""
+
+
+# Get IP
+IP=$(ip -4 addr show eth0 2>/dev/null | awk '/inet /{print $2}' | cut -d/ -f1)
+[ -z "$IP" ] && IP=$(ip -4 addr show wlan0 2>/dev/null | awk '/inet /{print $2}' | cut -d/ -f1)
+[ -z "$IP" ] && IP="(tidak terdeteksi)"
+
+# Waktu
+NOW=$(date +'%d/%m/%Y • %H:%M:%S')
+
+# Device Info
+MODEL=$(getprop ro.product.model)
+ANDROID=$(getprop ro.build.version.release)
+ROOT="No"
+[ "$(which su 2>/dev/null)" != "" ] && ROOT="Yes"
+
+# Internet check
+PING=$(ping -c 1 -W 1 8.8.8.8 2>/dev/null | awk -F'=' '/time=/{print $4}')
+[ -z "$PING" ] && PING="Offline"
+
+# CPU Info
+CPU=$(grep 'Hardware' /proc/cpuinfo | head -1 | awk -F ': ' '{print $2}')
+[ -z "$CPU" ] && CPU="Unknown CPU"
+
+LOAD=$(top -bn 1 2>/dev/null | awk '/%cpu/{print $2}' | head -1)
+[ -z "$LOAD" ] && LOAD="N/A"
+
+# RAM info
+MEM_TOTAL=$(free -m | awk '/Mem/{print $2}')
+MEM_USED=$(free -m | awk '/Mem/{print $3}')
+
+# Storage info
+STORAGE_FREE=$(df -h /data | awk 'NR==2{print $4}')
+
+# TMUX SESSION (bot)
+$TMUX -S $TMUX_SOCKET has-session -t telebot 2>/dev/null
+SESSION_EXISTS=$?
+
+# Start bot if not exists
+if [ $SESSION_EXISTS != 0 ]; then
+  $TMUX -S $TMUX_SOCKET new-session -d -s telebot "cd $BOT_DIR && git pull && $PYTHON run.py"
+  BOT_STATUS="Started"
+else
+  BOT_STATUS="Already Running"
+fi
+
+# Telegram message
+TEXT="💡 <b>STB Baru Menyala</b>
+
+🖥️ <b>Perangkat</b>
+• Model: <code>$MODEL</code>
+• Android: <code>$ANDROID</code>
+• Root: <code>$ROOT</code>
+
+🌐 <b>Jaringan</b>
+• IP: <code>$IP</code>
+• SSH: ON (8022)
+• Ping: <code>$PING</code>
+
+⚙️ <b>Bot Status</b>
+• Bot: <code>$BOT_STATUS</code>
+• Session: <code>telebot</code>
+
+🧠 <b>System Info</b>
+• CPU: <code>$CPU</code>
+• Load: <code>$LOAD%</code>
+• RAM: <code>${MEM_USED}MB / ${MEM_TOTAL}MB</code>
+• Storage Free: <code>$STORAGE_FREE</code>
+
+⏰ <b>Waktu</b>
+$NOW
+"
+
+# Kirim Telegram
+curl -s -X POST "https://api.telegram.org/bot7777245606:AAEo9fS7AH7Of9DSngYPEtfECS1Hbmh2j9Q/sendMessage" \
+  -d chat_id="7088612068" \
+  -d parse_mode="HTML" \
+  -d text="$TEXT"
+
+echo "[$NOW] Startup OK" >> ~/boot.log

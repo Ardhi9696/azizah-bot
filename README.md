@@ -32,5 +32,10 @@ Bisa juga untuk cek akun EPS
   TMUX_SOCKET=$TMUX_SOCKET tmux new-session -d -s monitor "cd ~/Azizah-Bot && TMUX_SOCKET=$TMUX_SOCKET node monitor_server.js"
   ```
   (script ini sudah mencari socket otomatis; sesuaikan jika path berbeda)
+- Jika socket default tidak bisa diakses (permission denied), pakai socket kustom bersama untuk bot & monitor:
+  - Pilih path, misal `/data/data/com.termux/files/home/.tmux-shared/telebot.sock`
+  - Start bot di termux-boot dengan `tmux -S /data/.../telebot.sock new-session -d -s telebot "cd ~/Azizah-Bot && python3 run.py"`
+  - Start monitor (root) dengan `TMUX_SOCKET=/data/.../telebot.sock tmux new-session -d -s monitor "cd ~/Azizah-Bot && TMUX_SOCKET=/data/.../telebot.sock node monitor_server.js"`
+  - Pastikan folder `.tmux-shared` ada dan bisa diakses (chmod 777 jika perlu).
 - Konfigurasi alert tersimpan di `monitor_config.json` (fallback di repo jika path Termux tidak ada).
 - Endpoint cepat: `/` dashboard, `/api/stats` JSON, `/api/stream` SSE feed, aksi bot di `/bot/start|stop|restart`.
