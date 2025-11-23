@@ -25,7 +25,7 @@ function renderDashboard(res, initialStats) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>STB Monitor</title>
+  <title>Set Top Box Monitoring</title>
   <style>
     :root {
       --bg: #050917;
@@ -155,30 +155,14 @@ function renderDashboard(res, initialStats) {
       body { padding: 16px; }
       h1 { font-size: 22px; }
     }
-    .bar {
-      width: 100%;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      height: 10px;
-      overflow: hidden;
-      margin-top: 6px;
-    }
-    .bar-fill {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, #38bdf8, #34d399);
-      transition: width 200ms ease;
-    }
-    .bar-fill.danger { background: linear-gradient(90deg, #f43f5e, #f59e0b); }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
       <div>
-        <h1>📊 STB Monitoring</h1>
-        <div class="muted">Realtime stats & alerts (root untuk sensor)</div>
+        <h1>📊 Set Top Box Monitoring</h1>
+        <div class="muted">Realtime stats & alerts</div>
       </div>
       <div class="pill" id="uptime-pill">Uptime: …</div>
     </header>
@@ -188,22 +172,19 @@ function renderDashboard(res, initialStats) {
         <h2>⚙️ CPU</h2>
         <div class="value" id="cpu-usage">–</div>
         <div class="muted">Temperatur: <span id="cpu-temp">–</span></div>
-        <div class="muted">Auto update setiap beberapa detik.</div>
-        <div class="bar"><div class="bar-fill" id="bar-cpu"></div></div>
+        <div class="muted">Auto update.</div>
       </div>
 
       <div class="card">
         <h2>🧠 Memory</h2>
         <div class="value" id="ram-usage">–</div>
         <div class="muted" id="ram-detail">–</div>
-        <div class="bar"><div class="bar-fill" id="bar-ram"></div></div>
       </div>
 
       <div class="card">
         <h2>💾 Storage</h2>
         <div class="value" id="disk-usage">–</div>
         <div class="muted" id="disk-detail">–</div>
-        <div class="bar"><div class="bar-fill" id="bar-disk"></div></div>
       </div>
 
       <div class="card">
@@ -298,21 +279,11 @@ function renderDashboard(res, initialStats) {
     function updateUI(data) {
       state.stats = data;
       document.getElementById("cpu-usage").textContent = data.cpu === null ? "N/A" : data.cpu.toFixed(1) + "%";
-      const barCpu = document.getElementById("bar-cpu");
-      if (barCpu && data.cpu !== null) {
-        barCpu.style.width = Math.min(Math.max(data.cpu, 0), 100) + "%";
-        barCpu.classList.toggle("danger", data.cpu >= 85);
-      }
       document.getElementById("cpu-temp").textContent = data.temp === null ? "Tidak tersedia" : data.temp.toFixed(1) + "°C";
 
       if (data.ram) {
         document.getElementById("ram-usage").textContent = data.ram.percent.toFixed(1) + "%";
         document.getElementById("ram-detail").textContent = formatGb(data.ram.usedGb) + " / " + formatGb(data.ram.totalGb);
-        const barRam = document.getElementById("bar-ram");
-        if (barRam) {
-          barRam.style.width = Math.min(Math.max(data.ram.percent, 0), 100) + "%";
-          barRam.classList.toggle("danger", data.ram.percent >= 85);
-        }
       } else {
         document.getElementById("ram-usage").textContent = "N/A";
         document.getElementById("ram-detail").textContent = "Akses RAM dibatasi oleh OS";
@@ -324,11 +295,6 @@ function renderDashboard(res, initialStats) {
           ? "N/A"
           : diskPercent.toFixed(1) + "%";
         document.getElementById("disk-detail").textContent = formatGb(data.disk.usedGb) + " / " + formatGb(data.disk.totalGb);
-        const barDisk = document.getElementById("bar-disk");
-        if (barDisk && diskPercent !== null && diskPercent !== undefined) {
-          barDisk.style.width = Math.min(Math.max(diskPercent, 0), 100) + "%";
-          barDisk.classList.toggle("danger", diskPercent >= 85);
-        }
       } else {
         document.getElementById("disk-usage").textContent = "N/A";
         document.getElementById("disk-detail").textContent = "Akses disk dibatasi";
