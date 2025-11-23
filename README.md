@@ -25,17 +25,8 @@ Bisa juga untuk cek akun EPS
 ## 🖥️ Monitoring Dashboard (Node.js)
 
 - Jalankan dengan `node monitor_server.js` (port default 8000). Pastikan Node.js 18+ terpasang.
-- Dashboard akan otomatis hot-reload data via SSE/polling tanpa perlu refresh halaman.
-- Jika monitor perlu akses sensor (harus root), jalankan monitor dengan `TMUX_SOCKET` menunjuk ke socket tmux milik user bot, misal di `start_monitor_root.sh`:
-  ```
-  TMUX_SOCKET=/data/data/com.termux/files/usr/tmp/tmux-XXXX/default
-  TMUX_SOCKET=$TMUX_SOCKET tmux new-session -d -s monitor "cd ~/Azizah-Bot && TMUX_SOCKET=$TMUX_SOCKET node monitor_server.js"
-  ```
-  (script ini sudah mencari socket otomatis; sesuaikan jika path berbeda)
-- Jika socket default tidak bisa diakses (permission denied), pakai socket kustom bersama untuk bot & monitor:
-  - Pilih path, misal `/data/data/com.termux/files/home/.tmux-shared/telebot.sock`
-  - Start bot di termux-boot dengan `tmux -S /data/.../telebot.sock new-session -d -s telebot "cd ~/Azizah-Bot && python3 run.py"`
-  - Start monitor (root) dengan `TMUX_SOCKET=/data/.../telebot.sock tmux new-session -d -s monitor "cd ~/Azizah-Bot && TMUX_SOCKET=/data/.../telebot.sock node monitor_server.js"`
-  - Pastikan folder `.tmux-shared` ada dan bisa diakses (chmod 777 jika perlu).
+- Dashboard auto hot-reload data via SSE/polling; tidak ada kontrol bot (hanya monitor + toggle alert).
+- Untuk akses sensor penuh, jalankan monitor sebagai root (misal tmux root via `start_monitor_root.sh`).
+- Bot tetap dijalankan sebagai user biasa (tmux session `telebot`), terpisah dari monitor.
 - Konfigurasi alert tersimpan di `monitor_config.json` (fallback di repo jika path Termux tidak ada).
-- Endpoint cepat: `/` dashboard, `/api/stats` JSON, `/api/stream` SSE feed, aksi bot di `/bot/start|stop|restart`.
+- Endpoint cepat: `/` dashboard, `/api/stats` JSON, `/api/stream` SSE feed, toggle alert di `/alerts/toggle`.

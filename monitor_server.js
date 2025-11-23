@@ -1,12 +1,9 @@
 const http = require("http");
-const { spawnSync, execFileSync } = require("child_process");
+const { execFileSync } = require("child_process");
 const fs = require("fs");
 const os = require("os");
 const { randomUUID } = require("crypto");
 const {
-  BOT_COMMAND,
-  BOT_DIR,
-  TMUX_BIN,
   TELEGRAM_BOT_TOKEN,
   TELEGRAM_CHAT_ID,
   loadConfig,
@@ -14,8 +11,6 @@ const {
 } = require("./monitor_config");
 
 const PORT = process.env.MONITOR_PORT || 8000;
-const TMUX_SOCKET = process.env.TMUX_SOCKET || null;
-const SESSION_NAME = "telebot";
 const ALERT_COOLDOWN_SEC = 300; // 5 minutes
 
 // In-memory state
@@ -129,75 +124,6 @@ function getUptime() {
   }
 }
 
-function botIsRunning() {
-  try {
-    const args = [];
-    if (TMUX_SOCKET) args.push("-S", TMUX_SOCKET);
-    args.push("has-session", "-t", SESSION_NAME);
-
-    const res = spawnSync(TMUX_BIN, args, {
-      stdio: "ignore",
-    });
-    return res.status === 0;
-  } catch (err) {
-    console.warn("[bot] has-session failed", err.message);
-    return false;
-  }
-}
-
-function botStart() {
-  if (botIsRunning()) {
-    return { ok: true, message: "Bot sudah berjalan." };
-  }
-  try {
-    const cmd = `cd ${BOT_DIR} && ${BOT_COMMAND}`;
-    const args = [];
-    if (TMUX_SOCKET) args.push("-S", TMUX_SOCKET);
-    args.push(
-      "new-session",
-      "-d",
-      "-s",
-      SESSION_NAME,
-      cmd
-    );
-    const res = spawnSync(TMUX_BIN, args);
-    if (res.status === 0) {
-      return { ok: true, message: "Bot dimulai di tmux session." };
-    }
-    return { ok: false, message: "Gagal membuat tmux session untuk bot." };
-  } catch (err) {
-    return { ok: false, message: `Gagal start bot: ${err.message}` };
-  }
-}
-
-function botStop() {
-  if (!botIsRunning()) {
-    return { ok: true, message: "Bot sudah mati." };
-  }
-  try {
-    const args = [];
-    if (TMUX_SOCKET) args.push("-S", TMUX_SOCKET);
-    args.push("kill-session", "-t", SESSION_NAME);
-
-    const res = spawnSync(TMUX_BIN, args, { stdio: "ignore" });
-    if (res.status === 0) {
-      return { ok: true, message: "Bot berhasil dihentikan." };
-    }
-    return { ok: false, message: "Gagal menghentikan bot." };
-  } catch (err) {
-    return { ok: false, message: `Gagal stop bot: ${err.message}` };
-  }
-}
-
-function botRestart() {
-  const stop = botStop();
-  const start = botStart();
-  return {
-    ok: stop.ok && start.ok,
-    message: `${stop.message} ${start.message}`.trim(),
-  };
-}
-
 function formatBytesToGb(bytes) {
   return Number((bytes / 1e9).toFixed(2));
 }
@@ -230,7 +156,6 @@ function buildStats() {
     alertsEnabled: Boolean(config.alerts_enabled),
     ramThreshold: config.ram_threshold,
     tempThreshold: config.temp_threshold,
-    botRunning: botIsRunning(),
     ts: Date.now(),
   };
 }
@@ -437,9 +362,9 @@ function renderDashboard(res, initialStats) {
     <header>
       <div>
         <h1>📊 STB Monitoring</h1>
-        <div class="muted">Realtime stats & bot control via Node.js</div>
+        <div class="muted">Realtime stats & alerts (root untuk sensor)</div>
       </div>
-      <div class="pill" id="bot-status-pill">Status: ?</div>
+      <div class="pill" id="uptime-pill">Uptime: …</div>
     </header>
 
     <div class="grid">
@@ -471,19 +396,6 @@ function renderDashboard(res, initialStats) {
 
     <div class="grid">
       <div class="card">
-        <h2>🤖 Bot Control</h2>
-        <div class="row">
-          <span class="status-dot" id="bot-dot"></span>
-          <span id="bot-status-text" class="muted">Mengecek...</span>
-        </div>
-        <div class="row" style="margin-top: 12px;">
-          <button class="btn" id="btn-start">Start</button>
-          <button class="btn danger" id="btn-stop">Stop</button>
-          <button class="btn" id="btn-restart">Restart</button>
-        </div>
-      </div>
-
-      <div class="card">
         <h2>🔔 Alerts</h2>
         <div class="row">
           <span class="status-dot" id="alert-dot"></span>
@@ -508,11 +420,20 @@ function renderDashboard(res, initialStats) {
     function formatPercent(val) { return val === null ? "N/A" : val.toFixed(1) + "%"; }
     function formatUptime(sec) {
       if (sec === null || sec === undefined) return "N/A";
-      const hours = sec / 3600;
-      if (hours < 24) return hours.toFixed(2) + " jam";
-      const days = Math.floor(hours / 24);
-      const rem = hours - days * 24;
-      return days + " hari " + rem.toFixed(1) + " jam";
+      let s = Math.floor(sec);
+      const years = Math.floor(s / 31536000); s -= years * 31536000;
+      const months = Math.floor(s / 2592000); s -= months * 2592000;
+      const days = Math.floor(s / 86400); s -= days * 86400;
+      const hours = Math.floor(s / 3600); s -= hours * 3600;
+      const minutes = Math.floor(s / 60); s -= minutes * 60;
+      const parts = [];
+      if (years) parts.push(years + " tahun");
+      if (months) parts.push(months + " bulan");
+      if (days) parts.push(days + " hari");
+      if (hours) parts.push(hours + " jam");
+      if (minutes) parts.push(minutes + " menit");
+      parts.push(s + " detik");
+      return parts.join(" ");
     }
     function showToast(msg) {
       toastEl.textContent = msg;
@@ -521,6 +442,19 @@ function renderDashboard(res, initialStats) {
     }
     function setLoading(isLoading) {
       document.querySelectorAll("button.btn").forEach((btn) => { btn.disabled = isLoading; });
+    }
+    async function callAction(path) {
+      try {
+        setLoading(true);
+        const res = await fetch(path, { method: "POST" });
+        const data = await res.json();
+        if (data && data.message) showToast(data.message);
+        if (data.stats) updateUI(data.stats);
+      } catch (err) {
+        showToast("Gagal memproses aksi: " + err.message);
+      } finally {
+        setLoading(false);
+      }
     }
     function updateUI(data) {
       state.stats = data;
@@ -550,10 +484,7 @@ function renderDashboard(res, initialStats) {
       const updatedAt = new Date(data.ts || Date.now());
       document.getElementById("updated-at").textContent = "Update: " + updatedAt.toLocaleTimeString();
 
-      const botRunning = data.botRunning;
-      document.getElementById("bot-status-text").textContent = botRunning ? "Bot aktif di tmux" : "Bot berhenti";
-      document.getElementById("bot-dot").className = "status-dot " + (botRunning ? "on" : "off");
-      document.getElementById("bot-status-pill").textContent = botRunning ? "Status: 🟢 Running" : "Status: 🔴 Stopped";
+      document.getElementById("uptime-pill").textContent = "Uptime: " + formatUptime(data.uptimeSec);
 
       const alertsOn = data.alertsEnabled;
       document.getElementById("alert-status-text").textContent = alertsOn ? "Alerts aktif" : "Alerts mati";
@@ -561,20 +492,6 @@ function renderDashboard(res, initialStats) {
       document.getElementById("btn-toggle-alert").textContent = alertsOn ? "Matikan Alerts" : "Nyalakan Alerts";
       document.getElementById("ram-th").textContent = data.ramThreshold ?? "–";
       document.getElementById("temp-th").textContent = data.tempThreshold ?? "–";
-    }
-
-    async function callAction(path) {
-      try {
-        setLoading(true);
-        const res = await fetch(path, { method: "POST" });
-        const data = await res.json();
-        if (data && data.message) showToast(data.message);
-        if (data.stats) updateUI(data.stats);
-      } catch (err) {
-        showToast("Gagal memproses aksi: " + err.message);
-      } finally {
-        setLoading(false);
-      }
     }
 
     function startSSE() {
@@ -602,9 +519,6 @@ function renderDashboard(res, initialStats) {
       }, 4000);
     }
 
-    document.getElementById("btn-start").onclick = () => callAction("/bot/start");
-    document.getElementById("btn-stop").onclick = () => callAction("/bot/stop");
-    document.getElementById("btn-restart").onclick = () => callAction("/bot/restart");
     document.getElementById("btn-toggle-alert").onclick = () => {
       const enable = state.stats?.alertsEnabled ? 0 : 1;
       callAction("/alerts/toggle?enable=" + enable);
@@ -673,25 +587,6 @@ async function handleRequest(req, res) {
 
   if (req.method === "GET" && url.pathname === "/api/stream") {
     handleSse(req, res);
-    return;
-  }
-
-  if (req.method === "POST" && url.pathname === "/bot/start") {
-    const result = botStart();
-    const stats = buildStats();
-    handleJson(res, { ...result, stats });
-    return;
-  }
-  if (req.method === "POST" && url.pathname === "/bot/stop") {
-    const result = botStop();
-    const stats = buildStats();
-    handleJson(res, { ...result, stats });
-    return;
-  }
-  if (req.method === "POST" && url.pathname === "/bot/restart") {
-    const result = botRestart();
-    const stats = buildStats();
-    handleJson(res, { ...result, stats });
     return;
   }
 
