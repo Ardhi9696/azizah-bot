@@ -11,7 +11,9 @@ TMUX="/data/data/com.termux/files/usr/bin/tmux"
 NODE="/data/data/com.termux/files/usr/bin/node"
 PYTHON="/data/data/com.termux/files/usr/bin/python3"
 BOT_DIR="/data/data/com.termux/files/home/Azizah-Bot"
+BOT_LOG="$BOT_DIR/telebot_boot.log"
 MONITOR_LOG="$BOT_DIR/monitor_root.log"
+USER_SOCKET="/data/data/com.termux/files/usr/var/run/tmux-$(id -u)/default"
 
 # Get IP
 IP=$(ip -4 addr show eth0 2>/dev/null | awk '/inet /{print $2}' | cut -d/ -f1)
@@ -45,13 +47,18 @@ MEM_USED=$(free -m | awk '/Mem/{print $3}')
 # Storage info
 STORAGE_FREE=$(df -h /data | awk 'NR==2{print $4}')
 
+# Bersihkan socket tmux user yang mandek
+if [ -S "$USER_SOCKET" ]; then
+  $TMUX ls >/dev/null 2>&1 || rm -f "$USER_SOCKET"
+fi
+
 # TMUX SESSION (bot) - user biasa
 $TMUX has-session -t telebot 2>/dev/null
 SESSION_EXISTS=$?
 
 # Start bot if not exists
 if [ $SESSION_EXISTS != 0 ]; then
-  $TMUX new-session -d -s telebot "cd $BOT_DIR && git pull && $PYTHON run.py"
+  $TMUX new-session -d -s telebot "cd $BOT_DIR && git pull && $PYTHON run.py" >> "$BOT_LOG" 2>&1
   BOT_STATUS="Started"
 else
   BOT_STATUS="Already Running"

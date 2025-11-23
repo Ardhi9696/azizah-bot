@@ -18,6 +18,7 @@ let config = loadConfig();
 let lastCpuTimes = null;
 let lastRamAlert = 0;
 let lastTempAlert = 0;
+let lastDiskAlert = 0;
 const sseClients = new Map(); // id -> response
 
 // Prime CPU reading so the first response is not empty.
@@ -156,6 +157,7 @@ function buildStats() {
     alertsEnabled: Boolean(config.alerts_enabled),
     ramThreshold: config.ram_threshold,
     tempThreshold: config.temp_threshold,
+    storageThreshold: config.storage_threshold,
     ts: Date.now(),
   };
 }
@@ -214,6 +216,22 @@ function maybeSendAlerts(stats) {
       ].join("\n");
       sendTelegramMessage(msg);
       lastTempAlert = now;
+    }
+  }
+
+  if (stats.disk && stats.disk.percent !== null) {
+    if (
+      stats.disk.percent >= config.storage_threshold &&
+      now - lastDiskAlert > ALERT_COOLDOWN_SEC
+    ) {
+      const msg = [
+        "💾 <b>STB STORAGE ALERT</b>",
+        "",
+        `📂 Storage: <b>${stats.disk.percent.toFixed(1)}%</b>`,
+        `⏱ Uptime: ${(stats.uptimeSec / 3600).toFixed(2)} jam`,
+      ].join("\n");
+      sendTelegramMessage(msg);
+      lastDiskAlert = now;
     }
   }
 }
@@ -338,6 +356,10 @@ function renderDashboard(res, initialStats) {
     }
     .status-dot.on { background: var(--success); box-shadow: 0 0 0 6px rgba(52, 211, 153, 0.16); }
     .status-dot.off { background: var(--danger); box-shadow: 0 0 0 6px rgba(244, 63, 94, 0.16); }
+    .spec-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+    .spec-list li { font-size: 14px; color: var(--text); }
+    .spec-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; background: rgba(56,189,248,0.16); border: 1px solid rgba(56,189,248,0.35); font-size: 12px; color: var(--text); }
     .toast {
       position: fixed;
       top: 16px;
@@ -394,19 +416,40 @@ function renderDashboard(res, initialStats) {
       </div>
     </div>
 
-    <div class="grid">
+    <div class="spec-grid">
       <div class="card">
-        <h2>🔔 Alerts</h2>
-        <div class="row">
-          <span class="status-dot" id="alert-dot"></span>
-          <span id="alert-status-text" class="muted">Mengecek...</span>
-        </div>
-        <div class="muted" style="margin-top: 8px;">
-          RAM ≥ <span id="ram-th">–</span>% | Suhu ≥ <span id="temp-th">–</span>°C
-        </div>
-        <div class="row" style="margin-top: 12px;">
-          <button class="btn" id="btn-toggle-alert">Toggle Alerts</button>
-        </div>
+        <h2>📱 Device Overview</h2>
+        <ul class="spec-list">
+          <li><b>Device:</b> Android TV Box (askey B860H V5.0)</li>
+          <li><b>OS:</b> Android 12 (API Level 31)</li>
+          <li><b>Arch:</b> ARMv8l (64-bit)</li>
+          <li><span class="tag">Uptime</span> <span id="overview-uptime">-</span></li>
+          <li><span class="tag">IP</span> 192.168.1.58 (eth0)</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2>⚙️ Hardware</h2>
+        <ul class="spec-list">
+          <li><b>CPU:</b> AMLogic S905X2 · 4x Cortex-A53 @ 1.80 GHz</li>
+          <li><b>GPU:</b> Mali-G31 MP2 (Integrated)</li>
+          <li><b>RAM:</b> 1.89 GiB total · 51% dipakai (~1 GiB sisa)</li>
+          <li><b>Storage:</b> Internal 1.14 GiB (85% used)</li>
+          <li><b>Ext/Emu:</b> 3.66 GiB total (2.30 GiB free)</li>
+          <li><b>Swap:</b> 384 MiB (0.2% used)</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2>💻 Software</h2>
+        <ul class="spec-list">
+          <li><b>Kernel:</b> Linux 4.9.269</li>
+          <li><b>Shell:</b> Bash 5.3.3</li>
+          <li><b>WM:</b> SurfaceFlinger (Android)</li>
+          <li><b>Locale:</b> en_US.UTF-8</li>
+          <li><b>Packages:</b> 126 (dpkg)</li>
+          <li><b>Terminal:</b> /dev/pts/3</li>
+        </ul>
       </div>
     </div>
   </div>
@@ -485,13 +528,9 @@ function renderDashboard(res, initialStats) {
       document.getElementById("updated-at").textContent = "Update: " + updatedAt.toLocaleTimeString();
 
       document.getElementById("uptime-pill").textContent = "Uptime: " + formatUptime(data.uptimeSec);
+      const overviewUptime = document.getElementById("overview-uptime");
+      if (overviewUptime) overviewUptime.textContent = formatUptime(data.uptimeSec);
 
-      const alertsOn = data.alertsEnabled;
-      document.getElementById("alert-status-text").textContent = alertsOn ? "Alerts aktif" : "Alerts mati";
-      document.getElementById("alert-dot").className = "status-dot " + (alertsOn ? "on" : "off");
-      document.getElementById("btn-toggle-alert").textContent = alertsOn ? "Matikan Alerts" : "Nyalakan Alerts";
-      document.getElementById("ram-th").textContent = data.ramThreshold ?? "–";
-      document.getElementById("temp-th").textContent = data.tempThreshold ?? "–";
     }
 
     function startSSE() {
@@ -508,6 +547,7 @@ function renderDashboard(res, initialStats) {
     let pollTimer = null;
     function startPolling() {
       if (pollTimer) return;
+      const pollMs = Math.max(1000, Math.min(10000, getIntervalMs()));
       pollTimer = setInterval(async () => {
         try {
           const res = await fetch("/api/stats");
@@ -516,7 +556,7 @@ function renderDashboard(res, initialStats) {
         } catch (err) {
           console.error("Polling failed", err);
         }
-      }, 2000);
+      }, pollMs);
     }
 
     document.getElementById("btn-toggle-alert").onclick = () => {
@@ -590,18 +630,6 @@ async function handleRequest(req, res) {
     return;
   }
 
-  if (req.method === "POST" && url.pathname === "/alerts/toggle") {
-    const enable = url.searchParams.get("enable");
-    const next = toggleAlerts(enable !== "0");
-    const stats = buildStats();
-    handleJson(res, {
-      ok: true,
-      message: next.alerts_enabled ? "Alerts diaktifkan." : "Alerts dimatikan.",
-      stats,
-    });
-    return;
-  }
-
   if (req.method === "GET" && url.pathname === "/healthz") {
     res.writeHead(200, { "Content-Type": "text/plain" });
     res.end("ok");
@@ -624,9 +652,15 @@ server.listen(PORT, () => {
   console.log(`Monitoring server listening at http://0.0.0.0:${PORT}`);
 });
 
-// Push stats to SSE clients and evaluate alerts every few seconds.
+// Push stats to SSE clients and evaluate alerts every few seconds (configurable 1-10s, default 3s).
+function getIntervalMs() {
+  const cfgVal = Number(config.polling_interval_sec);
+  const sec = Number.isFinite(cfgVal) ? Math.min(Math.max(cfgVal, 1), 10) : 3;
+  return sec * 1000;
+}
+
 setInterval(() => {
   const stats = buildStats();
   broadcastStats(stats);
   maybeSendAlerts(stats);
-}, 1000);
+}, getIntervalMs());

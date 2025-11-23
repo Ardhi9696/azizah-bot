@@ -1,27 +1,22 @@
-// Shared configuration for the Node.js monitoring server.
-// Mirrors the values used by the former Flask monitor so paths stay compatible.
 const fs = require("fs");
 const path = require("path");
 
 const TERMUX_HOME = "/data/data/com.termux/files/home";
-const TMUX_BIN = "/data/data/com.termux/files/usr/bin/tmux";
 
-// Bot location and start command
-const BOT_DIR = `${TERMUX_HOME}/Azizah-Bot`;
-const BOT_COMMAND = "python3 run.py";
-
-// Telegram credentials for alert notifications
+// Telegram credentials (was used for alerts; alerts toggle kini dimatikan)
 const TELEGRAM_BOT_TOKEN = "7777245606:AAEo9fS7AH7Of9DSngYPEtfECS1Hbmh2j9Q";
 const TELEGRAM_CHAT_ID = "7088612068";
 
-// Where alert config is stored; fall back to repo copy when running locally.
+// File config alert (tetap disimpan untuk threshold, walau toggle off)
 const CONFIG_FILE = path.join(TERMUX_HOME, "monitor_config.json");
 const LOCAL_CONFIG_FILE = path.join(__dirname, "monitor_config.json");
 
 const DEFAULT_CONFIG = {
-  alerts_enabled: true,
-  ram_threshold: 90,
-  temp_threshold: 75,
+  alerts_enabled: true,      // kirim notifikasi jika melewati threshold
+  ram_threshold: 90,         // persen
+  temp_threshold: 75,        // derajat C
+  storage_threshold: 90,     // persen penggunaan storage
+  polling_interval_sec: 3,   // interval update dashboard (1-10 detik)
 };
 
 function safeReadJson(filePath) {
@@ -65,9 +60,6 @@ function saveConfig(nextConfig) {
 
 module.exports = {
   TERMUX_HOME,
-  TMUX_BIN,
-  BOT_DIR,
-  BOT_COMMAND,
   TELEGRAM_BOT_TOKEN,
   TELEGRAM_CHAT_ID,
   CONFIG_FILE,
