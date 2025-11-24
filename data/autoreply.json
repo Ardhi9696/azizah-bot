@@ -5,6 +5,7 @@
     "-1001835375602": {
       "enabled": true,
       "topics": ["0"],
+      "blocked_topics": ["850"],
       "triggers": [
         {
           "keyword": "enak",
@@ -17,6 +18,13 @@
           "keyword": "capek",
           "replies": [
             "Capekmu beda sama capekku, tapi kita sama-sama berjuang 💪"
+          ]
+        },
+        {
+          "keyword": "halo",
+          "replies": [
+            "Halo! Ini auto-reply di grup (di luar thread blacklist).",
+            "Hai, saya aktif kecuali di thread terblokir."
           ]
         }
       ]

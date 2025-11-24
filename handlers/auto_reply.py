@@ -93,6 +93,11 @@ class AutoreplyManager:
             # Kalau message bukan di topic yang diizinkan → skip
             if topic_id is None or str(topic_id) not in allowed_topics:
                 return None
+        # blacklist topik
+        blocked_topics = chat_cfg.get("blocked_topics", [])
+        if blocked_topics and topic_id is not None:
+            if str(topic_id) in blocked_topics:
+                return None
 
         # 3) panjang maksimum
         if len(text) > 200:
