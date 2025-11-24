@@ -115,7 +115,7 @@ function renderDashboard(res, initialStats, config) {
           <li><b>CPU:</b> AMLogic S905X2 · 4x Cortex-A53 @ 1.80 GHz</li>
           <li><b>GPU:</b> Mali-G31 MP2 (Integrated)</li>
           <li><b>RAM:</b> 2 GB total</li>
-          <li><b>Storage:</b> Internal 4 GB total</li>
+          <li><b>Storage:</b> Internal 8 GB total</li>
           <li><b>Swap:</b> 400 MB</li>
         </ul>
       </div>
@@ -139,7 +139,7 @@ function renderDashboard(res, initialStats, config) {
     const state = { stats: ${JSON.stringify(initialStats)}, intervalSec: ${polling} };
     const toastEl = document.getElementById("toast");
 
-    function formatGb(val) { return val ? val.toFixed(2) + " GB" : "N/A"; }
+    function formatGb(val) { return val ? val.toFixed(2) + " GiB" : "N/A"; }
     function formatPercent(val) { return val === null ? "N/A" : val.toFixed(1) + "%"; }
     function formatUptime(sec) {
       if (sec === null || sec === undefined) return "N/A";
@@ -220,7 +220,9 @@ function renderDashboard(res, initialStats, config) {
         document.getElementById("disk-usage").textContent = (diskPercent === null || diskPercent === undefined)
           ? "N/A"
           : diskPercent.toFixed(1) + "%";
-        document.getElementById("disk-detail").textContent = formatGb(data.disk.usedGb) + " / " + formatGb(data.disk.totalGb);
+        const mountInfo = data.disk.mount ? " (" + data.disk.mount + ")" : "";
+        document.getElementById("disk-detail").textContent =
+          formatGb(data.disk.usedGb) + " / " + formatGb(data.disk.totalGb) + mountInfo;
         const barDisk = document.getElementById("bar-disk");
         if (barDisk) {
           if (diskPercent === null || diskPercent === undefined) {

@@ -141,6 +141,7 @@ function getDiskStats() {
       total: totalKb * 1024,
       used: usedKb * 1024,
       percent: Number.isNaN(percent) ? null : percent,
+      mount: "/",
     };
   } catch (err) {
     console.warn("[stats] Disk read failed (/):", err.message);
@@ -158,6 +159,7 @@ function getDiskStats() {
         total: totalKb * 1024,
         used: usedKb * 1024,
         percent: Number.isNaN(percent) ? null : percent,
+        mount: "/data",
       };
     } catch (err2) {
       console.warn("[stats] Disk read failed (/data):", err2.message);
@@ -176,7 +178,8 @@ function getUptime() {
 }
 
 function formatBytesToGb(bytes) {
-  return Number((bytes / 1e9).toFixed(2));
+  const gib = bytes / (1024 ** 3);
+  return Number(gib.toFixed(2));
 }
 
 function buildStats(config) {
@@ -200,6 +203,7 @@ function buildStats(config) {
           totalGb: formatBytesToGb(disk.total),
           usedGb: formatBytesToGb(disk.used),
           percent: disk.percent,
+          mount: disk.mount,
         }
       : null,
     uptimeSec,
