@@ -155,6 +155,22 @@ function renderDashboard(res, initialStats) {
       body { padding: 16px; }
       h1 { font-size: 22px; }
     }
+    .bar {
+      width: 100%;
+      background: #0b1224;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      height: 12px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    .bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #38bdf8, #34d399);
+      transition: width 160ms ease, background 160ms ease;
+    }
+    .bar-fill.danger { background: linear-gradient(90deg, #f43f5e, #f59e0b); }
   </style>
 </head>
 <body>
@@ -173,18 +189,21 @@ function renderDashboard(res, initialStats) {
         <div class="value" id="cpu-usage">–</div>
         <div class="muted">Temperatur: <span id="cpu-temp">–</span></div>
         <div class="muted">Auto update.</div>
+        <div class="bar"><div class="bar-fill" id="bar-cpu"></div></div>
       </div>
 
       <div class="card">
         <h2>🧠 Memory</h2>
         <div class="value" id="ram-usage">–</div>
         <div class="muted" id="ram-detail">–</div>
+        <div class="bar"><div class="bar-fill" id="bar-ram"></div></div>
       </div>
 
       <div class="card">
         <h2>💾 Storage</h2>
         <div class="value" id="disk-usage">–</div>
         <div class="muted" id="disk-detail">–</div>
+        <div class="bar"><div class="bar-fill" id="bar-disk"></div></div>
       </div>
 
       <div class="card">
@@ -279,14 +298,37 @@ function renderDashboard(res, initialStats) {
     function updateUI(data) {
       state.stats = data;
       document.getElementById("cpu-usage").textContent = data.cpu === null ? "N/A" : data.cpu.toFixed(1) + "%";
+      const barCpu = document.getElementById("bar-cpu");
+      if (barCpu) {
+        const cpuVal = data.cpu;
+        if (cpuVal === null || cpuVal === undefined) {
+          barCpu.style.width = "0%";
+          barCpu.classList.remove("danger");
+        } else {
+          const clamped = Math.min(Math.max(cpuVal, 0), 100);
+          barCpu.style.width = clamped + "%";
+          barCpu.classList.toggle("danger", clamped >= 85);
+        }
+      }
       document.getElementById("cpu-temp").textContent = data.temp === null ? "Tidak tersedia" : data.temp.toFixed(1) + "°C";
 
       if (data.ram) {
         document.getElementById("ram-usage").textContent = data.ram.percent.toFixed(1) + "%";
         document.getElementById("ram-detail").textContent = formatGb(data.ram.usedGb) + " / " + formatGb(data.ram.totalGb);
+        const barRam = document.getElementById("bar-ram");
+        if (barRam) {
+          const clamped = Math.min(Math.max(data.ram.percent, 0), 100);
+          barRam.style.width = clamped + "%";
+          barRam.classList.toggle("danger", clamped >= 85);
+        }
       } else {
         document.getElementById("ram-usage").textContent = "N/A";
         document.getElementById("ram-detail").textContent = "Akses RAM dibatasi oleh OS";
+        const barRam = document.getElementById("bar-ram");
+        if (barRam) {
+          barRam.style.width = "0%";
+          barRam.classList.remove("danger");
+        }
       }
 
       if (data.disk) {
@@ -295,9 +337,25 @@ function renderDashboard(res, initialStats) {
           ? "N/A"
           : diskPercent.toFixed(1) + "%";
         document.getElementById("disk-detail").textContent = formatGb(data.disk.usedGb) + " / " + formatGb(data.disk.totalGb);
+        const barDisk = document.getElementById("bar-disk");
+        if (barDisk) {
+          if (diskPercent === null || diskPercent === undefined) {
+            barDisk.style.width = "0%";
+            barDisk.classList.remove("danger");
+          } else {
+            const clamped = Math.min(Math.max(diskPercent, 0), 100);
+            barDisk.style.width = clamped + "%";
+            barDisk.classList.toggle("danger", clamped >= 85);
+          }
+        }
       } else {
         document.getElementById("disk-usage").textContent = "N/A";
         document.getElementById("disk-detail").textContent = "Akses disk dibatasi";
+        const barDisk = document.getElementById("bar-disk");
+        if (barDisk) {
+          barDisk.style.width = "0%";
+          barDisk.classList.remove("danger");
+        }
       }
 
       document.getElementById("uptime").textContent = formatUptime(data.uptimeSec);
