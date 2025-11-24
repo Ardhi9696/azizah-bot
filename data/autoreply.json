@@ -1,0 +1,25 @@
+
+{
+  "enabled": true,
+  "chats": {
+    "-1001234567890": {
+      "enabled": true,
+      "topics": ["0", "1234", "5678"],
+      "triggers": [
+        {
+          "keyword": "enak",
+          "replies": [
+            "enakmu bukan enaku, enaku bukan enakmu 😏",
+            "Enak di kamu belum tentu enak di aku 😌"
+          ]
+        },
+        {
+          "keyword": "capek",
+          "replies": [
+            "Capekmu beda sama capekku, tapi kita sama-sama berjuang 💪"
+          ]
+        }
+      ]
+    }
+  }
+}

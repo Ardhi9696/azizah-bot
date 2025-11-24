@@ -30,10 +30,15 @@ from handlers.moderasi import (
     cmd_resetbanall,
     cmd_tambahkata,
 )
+from handlers.auto_reply import (
+    handle_autoreply_message,
+    handle_autoreply_off,
+    handle_autoreply_on,
+)
 
 
 def register_handlers(app: Application):
-    # === Command Handlers ===
+    # === Guard & thread cleanup ===
     app.add_handler(
         MessageHandler(
             filters.ChatType.SUPERGROUP
@@ -43,6 +48,8 @@ def register_handlers(app: Application):
         ),
         group=0,
     )
+
+    # === Command Handlers (umum & admin) ===
     app.add_handler(CommandHandler("help", with_cooldown(help_command)))
     app.add_handler(CommandHandler("cekid", with_cooldown(cek_id)))
     app.add_handler(CommandHandler("get", with_cooldown(get_info)))
@@ -68,23 +75,35 @@ def register_handlers(app: Application):
     app.add_handler(CommandHandler("cekstrike", cmd_cekstrike))
     app.add_handler(CommandHandler("resetstrikeall", cmd_resetstrikeall))
     app.add_handler(CommandHandler("resetbanall", cmd_resetbanall))
+    app.add_handler(CommandHandler("autoreply_on", handle_autoreply_on))
+    app.add_handler(CommandHandler("autoreply_off", handle_autoreply_off))
 
     # === Message Handlers ===
     app.add_handler(
         MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, welcome_new_member)
     )
-    # Responder hanya untuk teks biasa/mention/reply, TIDAK untuk command
+    # Moderasi hanya di supergroup, juga exclude command (prioritas lebih tinggi)
+    app.add_handler(
+        MessageHandler(
+            filters.TEXT & ~filters.COMMAND & filters.ChatType.SUPERGROUP, moderasi
+        ),
+        group=1,
+    )
+    # Autoreply untuk teks biasa (non-command) di supergroup (jalan setelah moderasi)
+    app.add_handler(
+        MessageHandler(
+            filters.TEXT & ~filters.COMMAND & filters.ChatType.SUPERGROUP,
+            handle_autoreply_message,
+        ),
+        group=2,
+    )
+    # Responder hanya untuk teks biasa/mention/reply, TIDAK untuk command (paling akhir)
     app.add_handler(
         MessageHandler(
             filters.TEXT
             & ~filters.COMMAND
             & (filters.REPLY | filters.Entity("mention")),
             simple_responder,
-        )
-    )
-    # Moderasi hanya di supergroup, juga exclude command
-    app.add_handler(
-        MessageHandler(
-            filters.TEXT & ~filters.COMMAND & filters.ChatType.SUPERGROUP, moderasi
-        )
+        ),
+        group=3,
     )
