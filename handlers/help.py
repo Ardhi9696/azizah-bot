@@ -19,6 +19,8 @@ Semua perintah gabungan tiga bot di grup ini:
 /kursidr [n] – KRW → IDR, /kurswon  – IDR → KRW  
 /kursusd [n] – USD → IDR, /kursidrusd – IDR → USD  
 /adminlist – Daftar admin grup, /cekstrike – Cek strike kamu
+/autoreply_on | /autoreply_off – Aktif/nonaktif autoreply per grup  
+/autoreply_reload – Reload config autoreply (DM admin saja)
 
 🧩 *Nichanan-Bot (Scrapper)*  
 /cek <no ujian 16digit> – Cek hasil UBT EPS-TOPIK  
@@ -41,6 +43,7 @@ Semua perintah gabungan tiga bot di grup ini:
 /cekid – Tampilkan ID chat dan thread
 
 ✨ Moderasi aktif: anti spam command, filter kata kasar/topik sensitif, strike otomatis (ban setelah 3), auto mute.
+ℹ️ Autoreply: aktif di chat yang terdaftar di `autoreply.json` (topik bisa dibatasi; thread blacklist diabaikan). Perubahan config butuh /autoreply_reload atau restart bot.
 
 💌 Powered by: *LeeBot EPS-TOPIK* 🇰🇷🇮🇩
         """,

@@ -29,6 +29,12 @@ class AutoreplyManager:
         with open(self.json_path, "w", encoding="utf-8") as f:
             json.dump(self.data, f, ensure_ascii=False, indent=2)
 
+    def reload(self):
+        self.data = self._load()
+        self.data.setdefault("chats", {})
+        # cooldown dibiarkan apa adanya (optional), kalau mau reset:
+        # self.last_reply_ts = {}
+
     def set_chat_enabled(self, chat_id: int, enabled: bool):
         chat_key = str(chat_id)
         if "chats" not in self.data:
@@ -198,3 +204,20 @@ async def handle_autoreply_message(update: Update, ctx: ContextTypes.DEFAULT_TYP
     )
     if reply:
         await update.message.reply_text(reply)
+
+
+async def handle_autoreply_reload(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    """Reload konfigurasi autoreply dari file. Hanya admin via DM."""
+    if not update.message:
+        return
+    chat = update.effective_chat
+    user_id = update.effective_user.id
+
+    if chat and chat.type != "private":
+        return  # hanya via DM
+
+    if not is_admin(user_id):
+        return await update.message.reply_text("❌ Hanya admin yang bisa reload autoreply (DM).")
+
+    autoreply_manager.reload()
+    await update.message.reply_text("🔄 Config autoreply sudah di-reload dari file.")

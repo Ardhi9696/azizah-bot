@@ -34,6 +34,7 @@ from handlers.auto_reply import (
     handle_autoreply_message,
     handle_autoreply_off,
     handle_autoreply_on,
+    handle_autoreply_reload,
 )
 
 
@@ -77,6 +78,7 @@ def register_handlers(app: Application):
     app.add_handler(CommandHandler("resetbanall", cmd_resetbanall))
     app.add_handler(CommandHandler("autoreply_on", handle_autoreply_on))
     app.add_handler(CommandHandler("autoreply_off", handle_autoreply_off))
+    app.add_handler(CommandHandler("autoreply_reload", handle_autoreply_reload))
 
     # === Message Handlers ===
     app.add_handler(
