@@ -4,7 +4,7 @@
   "chats": {
     "-1001234567890": {
       "enabled": true,
-      "topics": ["0", "1234", "5678"],
+      "topics": ["0"],
       "triggers": [
         {
           "keyword": "enak",
@@ -17,6 +17,26 @@
           "keyword": "capek",
           "replies": [
             "Capekmu beda sama capekku, tapi kita sama-sama berjuang 💪"
+          ]
+        }
+      ]
+    },
+    "7088612068": {
+      "enabled": true,
+      "topics": ["0"],
+      "triggers": [
+        {
+          "keyword": "halo",
+          "replies": [
+            "Halo admin, auto-reply test siap 👍",
+            "Hai! Ini balasan uji coba di DM."
+          ]
+        },
+        {
+          "keyword": "tes",
+          "replies": [
+            "Tes auto-reply berhasil.",
+            "Tes diterima, silakan lanjut."
           ]
         }
       ]

@@ -89,10 +89,12 @@ def register_handlers(app: Application):
         ),
         group=1,
     )
-    # Autoreply untuk teks biasa (non-command) di supergroup (jalan setelah moderasi)
+    # Autoreply untuk teks biasa (non-command) di supergroup & DM (jalan setelah moderasi)
     app.add_handler(
         MessageHandler(
-            filters.TEXT & ~filters.COMMAND & filters.ChatType.SUPERGROUP,
+            filters.TEXT
+            & ~filters.COMMAND
+            & (filters.ChatType.SUPERGROUP | filters.ChatType.PRIVATE),
             handle_autoreply_message,
         ),
         group=2,
