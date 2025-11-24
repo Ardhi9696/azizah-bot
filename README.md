@@ -37,3 +37,9 @@ Bisa juga untuk cek akun EPS
 ## 🧹 Catatan
 
 - Folder `handlers_heavy` sudah dihapus (bot tidak lagi memuat modul berat tersebut).
+- Struktur bot:
+  - `handlers/` berisi command, moderasi, autoreply (`register_handlers.py` sebagai entry).
+  - `utils/constants.py` menyimpan lokasi file data/log.
+  - Data bot di `data/` (misal `respon.json`, `autoreply.json`, cache EPS, dll).
+  - Monitor terpisah di folder `monitor/` (config/stats/alerts/server).
+- Prioritas handler: moderasi lebih dulu, lalu autoreply, lalu responder mention/reply (diatur via `group` di `register_handlers.py`).
