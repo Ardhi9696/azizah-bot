@@ -9,7 +9,7 @@ function renderDashboard(res, initialStats, config) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Set Top Box Monitoring</title>
-  <link rel="icon" href="icon.png">
+  <link rel="icon" href="/icon.png">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' x2='1' y1='0' y2='1'%3E%3Cstop stop-color='%2338bdf8'/%3E%3Cstop offset='1' stop-color='%23f43f5e'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='%23050917'/%3E%3Cpath fill='url(%23g)' d='M18 24c0-4 3-7 7-7h14c4 0 7 3 7 7v16c0 4-3 7-7 7H25c-4 0-7-3-7-7V24z'/%3E%3Cpath fill='none' stroke='%23e5e7eb' stroke-width='3' stroke-linecap='round' d='M24 24v16m16-16v16M20 30h24M20 38h24'/%3E%3Ccircle cx='32' cy='32' r='4' fill='%23e5e7eb'/%3E%3C/svg%3E">
   <style>
     :root {

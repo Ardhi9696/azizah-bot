@@ -1,4 +1,6 @@
 const http = require("http");
+const path = require("path");
+const fs = require("fs");
 const { randomUUID } = require("crypto");
 
 const { buildStats, primeCpu } = require("./stats");
@@ -54,6 +56,19 @@ function getIntervalMs() {
 
 function handleRequest(req, res) {
   const url = parseUrl(req);
+  if (req.method === "GET" && url.pathname === "/icon.png") {
+    const iconPath = path.join(__dirname, "icon.png");
+    if (fs.existsSync(iconPath)) {
+      const buf = fs.readFileSync(iconPath);
+      res.writeHead(200, { "Content-Type": "image/png" });
+      res.end(buf);
+    } else {
+      res.writeHead(404, { "Content-Type": "text/plain" });
+      res.end("icon not found");
+    }
+    return;
+  }
+
   if (req.method === "GET" && url.pathname === "/") {
     const stats = buildStats(config);
     renderDashboard(res, stats, config);
