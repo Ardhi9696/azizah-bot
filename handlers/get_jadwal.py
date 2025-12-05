@@ -34,6 +34,10 @@ def ambil_data_jadwal():
 
         soup = BeautifulSoup(html_text, "html.parser")
         rows = soup.select("table.tableType tr[id^='tr_']")
+        if not rows:
+            table = soup.find("table", class_="tableType") or soup.find("table")
+            if table:
+                rows = [tr for tr in table.find_all("tr") if tr.find_all("td")]
 
         if not rows:
             logger.warning("⚠️ Tidak ada baris data ditemukan.")

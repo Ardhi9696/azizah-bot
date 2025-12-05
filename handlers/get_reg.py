@@ -32,7 +32,11 @@ def ambil_data_pendaftaran():
         html_text = result.stdout.decode("utf-8")
 
         soup = BeautifulSoup(html_text, "html.parser")
-        rows = soup.select("table.tableType > tr[id^='tr_']")
+        rows = soup.select("table.tableType tr[id^='tr_']")
+        if not rows:
+            table = soup.find("table", class_="tableType") or soup.find("table")
+            if table:
+                rows = [tr for tr in table.find_all("tr") if tr.find_all("td")]
 
         if not rows:
             return []

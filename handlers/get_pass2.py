@@ -40,6 +40,7 @@ def ambil_data_final():
                 rows = [tr for tr in table.find_all("tr") if tr.find_all("td")]
 
         if not rows:
+            logger.warning("⚠️ Tidak ada baris data tahap final ditemukan (selector kosong).")
             return []
 
         data = []
