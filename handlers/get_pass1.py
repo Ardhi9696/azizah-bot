@@ -69,9 +69,15 @@ def simpan_cache(data):
 
 
 def is_data_baru(data_baru, data_lama):
-    judul_baru = [d["title"] for d in data_baru]
-    judul_lama = [d["title"] for d in data_lama]
-    return judul_baru != judul_lama
+    key = lambda d: (
+        d.get("title", ""),
+        d.get("type", ""),
+        d.get("date", ""),
+        d.get("nation", ""),
+    )
+    baru = [key(d) for d in data_baru]
+    lama = [key(d) for d in data_lama]
+    return baru != lama
 
 
 def format_tahap1_html(data: list, jumlah: int = 1) -> str:
@@ -104,14 +110,13 @@ async def get_pass1(update: Update, context: ContextTypes.DEFAULT_TYPE):
         data_lama = load_cache()
         data_baru = ambil_data_tahap1()
 
+        data = data_lama
         if data_baru:
-            if is_data_baru(data_baru, data_lama):
+            if is_data_baru(data_baru, data_lama) or not data_lama:
                 simpan_cache(data_baru)
                 data = data_baru
             else:
                 data = data_lama
-        else:
-            data = data_lama
 
         if not data:
             await update.message.reply_text("⚠️ Tidak ada data tahap 1 ditemukan.")
