@@ -72,9 +72,15 @@ def simpan_cache(data):
 
 
 def is_data_baru(data_baru, data_lama):
-    judul_baru = [d["title"] for d in data_baru]
-    judul_lama = [d["title"] for d in data_lama]
-    return judul_baru != judul_lama
+    key = lambda d: (
+        d.get("title", ""),
+        d.get("type", ""),
+        d.get("announcement_date", ""),
+        d.get("nation", ""),
+    )
+    baru = [key(d) for d in data_baru]
+    lama = [key(d) for d in data_lama]
+    return baru != lama
 
 
 async def get_jadwal(update: Update, context: ContextTypes.DEFAULT_TYPE):
