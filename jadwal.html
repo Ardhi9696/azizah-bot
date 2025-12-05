@@ -1,0 +1,949 @@
+<html lang="ko"><head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+<link rel="stylesheet" type="text/css" href="/epstopik/css/home/style_eng.css">
+<link rel="stylesheet" type="text/css" href="/epstopik/css/home/ddsmoothmenu_eng.css">
+<script type="text/javascript" src="/epstopik/js/home/ddsmoothmenu_eng.js"></script>
+<script type="text/javascript" src="/epstopik/js/home/common.js"></script>
+
+<script src="/epstopik/js/home/new/jquery-3.5.1.min.js"></script>
+<script src="/epstopik/js/home/new/bootstrap.min.js"></script>
+<script src="/epstopik/js/home/new/slick.min.js"></script>
+<link rel="stylesheet" href="/epstopik/css/home/new/style.css">
+<link rel="stylesheet" href="/epstopik/css/home/new/bootstrap.min.css">
+<link rel="stylesheet" href="/epstopik/css/home/new/slick.css">
+<link rel="stylesheet" href="/epstopik/css/home/new/slick-theme.css">
+
+
+<script type="text/javascript" src="/epstopik/js/home/follower.js"></script>
+
+<script type="text/javascript" src="/epstopik/js/validMsg.js"></script>
+<script type="text/javascript" src="/epstopik/js/valid.js"></script>
+
+<!-- WebLight Code - Begin -->
+<script type="text/javascript" src="/epstopik/js/wlcollector.js"></script>
+<script type="text/javascript" src="/epstopik/js/UserScriptConf.js"></script>
+<!-- WebLight Code - End --> 
+
+
+
+
+
+<script>
+	var resultMessage = "";
+	if( resultMessage != "" ) alert( resultMessage.replace(/&#034;/g, '"').replace(/&#039;/g, "'") );
+	
+	var popClose = "";
+	if(popClose == "close"){
+		self.close();
+	}
+</script>
+
+
+<script>
+	/*
+	 * objForm : form객체
+	 * name : 값이 설정된 field명. yyyy-MM-dd 포맷.
+	 * validName : 별도 format으로 validation체크가 필요한 경우에 설정된 field명. yyyyMMdd 포맷.
+	 */
+	function comboProc( req, objTarget )
+	{
+		var xmlData = trim(req.responseText);
+		var dom = getXmlDom(xmlData);
+		var xml = dom.getRootElement();
+
+		objTarget.options.length = 1;
+		
+		var arrDataNode = xml.getElementsByTagName("item").length > 0 ? xml.getElementsByTagName("item") : null;
+		var lenDataNode = arrDataNode != null ? arrDataNode.length : 0;
+		if( lenDataNode > 0 )
+		{	
+			for( var i = 0 ; i < lenDataNode ; i++ )
+			{
+				var label = dom.getCDataValue(arrDataNode[i], "label");
+				var value = dom.getCDataValue(arrDataNode[i], "value");
+				objTarget.options[i+1] = new Option(label, value);
+				objTarget.options[i+1].setAttribute("reserve1", dom.getCDataValue(arrDataNode[i], "reserve1"));
+				objTarget.options[i+1].setAttribute("reserve2", dom.getCDataValue(arrDataNode[i], "reserve2"));
+				objTarget.options[i+1].setAttribute("reserve3", dom.getCDataValue(arrDataNode[i], "reserve3"));
+				objTarget.options[i+1].setAttribute("reserve4", dom.getCDataValue(arrDataNode[i], "reserve4"));
+			}
+		}
+	}
+
+	function layoutOnLoad()
+	{
+		// 에러 메시지의 [&quot;],[+] 제거
+		var objContent = document.getElementById("contentWrap");
+		if(objContent){
+			var errs = objContent.getElementsByTagName("span");
+			var len = errs.length;
+			for( var i = 0 ; i < len ; i++ )
+			{
+				var o = errs[i];
+				if(o.getAttribute("id") != null){
+					if( !isEmpty(o.getAttribute("id")) && o.getAttribute("id").indexOf(".errors") > 0 )
+					{
+						o.innerHTML = o.innerHTML.replace("&quot;+", "").replace("+&quot;", "");
+					}
+				}
+			}
+			objContent.style.display = "";
+		}
+		if( typeof preOnLoad == "function" ) preOnLoad();
+	}
+
+	onload = layoutOnLoad;
+	
+	/** 오른쪽 소스막기*/
+	  $(document).ready(function(){
+		 document.onkeydown = function(){
+		 if(event.srcElement.type != "text" && event.srcElement.type != "textarea"){
+			
+		 	  if(event.ctrlKey && (event.keyCode == 78 || event.keyCode == 82)){
+		 		 return false;
+		 	  }
+		  }
+	   }
+	   document.ondragstart = function(){
+	  		if(event.srcElement.type != "text" && event.srcElement.type != "textarea"){
+		 		return false;
+			 }
+	    }
+	   document.onselectstart = function(){
+	  		if(event.srcElement.type != "text" && event.srcElement.type != "textarea"){
+		 		return false;
+		 	}
+	    }
+	   document.oncontextmenu = function(){
+	    	if(event.srcElement.type != "text" && event.srcElement.type != "textarea"){
+		 		return false;
+			}
+	    }
+	 }); 
+</script>
+
+<title>한국어 CBT 메인페이지 </title>
+
+</head>
+<body><div class="ddshadow toplevelshadow" style="left: 747px; top: 109.000008px;"></div><div class="ddshadow toplevelshadow" style="left: 607px; top: 109.000008px;"></div><div class="ddshadow toplevelshadow" style="left: 487px; top: 109.000008px;"></div><div class="ddshadow toplevelshadow" style="left: 367px; top: 109.000008px;"></div><div class="ddshadow toplevelshadow" style="left: 257px; top: 109.000008px;"></div>
+<a name="top"></a>
+
+<div id="containerWrap">
+	<div id="headerWrap">
+		<div class="header">
+	<!-- header -->
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script type="text/javascript">
+	$(document).ready(function(){
+		var test = "cbt/home/abot/ScheduleGuide_eng";
+	})
+	ddsmoothmenu.init({
+		mainmenuid: "smoothmenu1", // 메뉴의 div 아이디값
+		orientation: 'h', // h : 세로형 v :가로형
+		classname: 'ddsmoothmenu', // 메뉴의 div 클래스값
+		//customtheme: ["#1c5a80", "#18374a"], // 다양한 색을 적용하고 싶을때 색값을 지정하세요
+		contentsource: "markup" //"markup" or ["container_id", "path_to_menu_file"]
+	})
+</script>
+
+    <!-- header start -->
+    <header>
+        <!-- header 상단 home,sitemap,language 박스 start -->
+        <div class="header__ header-top-box">
+            <div class="container">
+            <div class="header-top-box__ row justify-content-end">
+                <div class="header-top-box__ col-3">
+                    <span class="home-span">
+                        <a href="/epstopik/home/index/index.do">HOME</a>
+                    </span>
+                    <span class="line-span line01">|</span>
+                    <span class="site-map-span">
+                        <a href="/epstopik/home/site/siteMap.do?lang=en">SITEMAP</a>
+                    </span>
+                    <span class="line-span line02">|</span>
+                    <span class="select-span">
+                        <a href="/epstopik/home/main/mainPage.do?lang=ko" alt="KOREAN">KOREAN</a>
+                    </span>
+                </div>
+            </div>
+            </div>
+        </div>
+        <!-- header 상단 home,sitemap,language 박스 end -->
+
+        <!-- header 메뉴 박스 start -->
+        <div class="header-menu-box">
+            <nav class="header-menu-box__ navbar navbar-expand-lg">
+                <div class="header-menu-box__ container">
+                    <a class="header-menu-box__ navbar-brand" href="/epstopik/home/main/mainPage.do?lang=en">
+                        <img src="/epstopik/images/home/new/eng/logo.png" alt="logo-img">
+                    </a>
+                    <div id="smoothmenu1" class="ddsmoothmenu">
+                        <ul class="header-menu-box__ navbar-nav menu-nav">
+                            <li class="header-menu-box__ nav-item" style="z-index: 100;">
+                             <a class="header-menu-box__ nav-link gnb01" href="/epstopik/abot/exam/selectTopikDesc.do?lang=en">EPS-TOPIK</a>
+           						<ul style="display: none; top: 55px; visibility: visible;">
+									<li><a href="/epstopik/abot/exam/selectTopikDesc.do?lang=en">What is EPS-TOPIK?</a></li>
+									<li><a href="/epstopik/abot/exam/selectTopikDescSpecial.do?lang=en">Special EPS-TOPIK</a></li>
+									<li><a href="/epstopik/abot/exam/selectStandardDesc.do?lang=en">Testing Module</a></li>
+									<li><a href="/epstopik/abot/exam/selectGuideDesc.do?lang=en">Application Form</a></li>
+									<li><a href="/epstopik/abot/exam/selectSechduleDescList.do?lang=en">Schedule</a></li>
+									<li><a href="/epstopik/abot/exam/sechduleGuideList.do?lang=en">Announcement of Test Date</a></li>
+									<li><a href="/epstopik/abot/exam/selectRuleDesc.do?lang=en">Punishment of Wrongdoer</a></li>
+									<li><a href="/epstopik/pass/candidate/selectChart.do?lang=en">Chart</a></li> 
+								</ul>
+                            </li>
+                            <li class="header-menu-box__ nav-item" style="z-index: 99;">
+                            	<a class="header-menu-box__ nav-link gnb02" href="/epstopik/recp/guide/selectVisitGuideDesc.do?lang=en">Registration by Visitng</a> 
+								<ul style="display: none; top: 55px; visibility: visible;">
+									<li><a href="/epstopik/recp/guide/selectVisitGuideDesc.do?lang=en">Registration by Visitng</a></li>
+									<li><a href="/epstopik/recp/guide/onlineRecptionDesc.do?lang=en">Registration by On-Line</a></li>
+									<li><a href="/epstopik/recp/guide/selectCancelGuideDesc.do?lang=en">Cancellation/Refund</a></li>
+									<li><a href="/epstopik/recp/guide/selectReceptionGuideList.do?lang=en">Information Office</a></li>
+									<li><a href="/epstopik/recp/guide/selectTestsiteGuideList.do?lang=en">Test Center</a></li>
+									<li><a href="/epstopik/recp/guide/onlineReceptionContents.do?lang=en">CBT Registration search</a></li>
+								</ul>
+                            </li>
+                            <li class="header-menu-box__ nav-item" style="z-index: 98;">
+                               <a class="header-menu-box__ nav-link gnb03" href="/epstopik/pass/candidate/functionalLevelCandidateList.do?lang=en">Passer's list</a>
+						 	   <ul style="display: none; top: 55px; visibility: visible;">
+									<li><a href="/epstopik/pass/candidate/functionalLevelCandidateList.do?lang=en">Candidates for skills test</a></li>
+									<li><a href="/epstopik/pass/candidate/sucessCandidateList.do?lang=en">Passer's list</a></li>
+									<li><a href="/epstopik/pass/candidate/sucessPointReportList.do?lang=en">See Candidates for skills</a></li> 
+									<li><a href="/epstopik/pass/candidate/sucessReportList.do?lang=en">See exam results</a></li> 
+							  </ul>
+                            </li>
+                            <li class="header-menu-box__ nav-item" style="z-index: 97;">
+                            	<a class="header-menu-box__ nav-link gnb04" href="/epstopik/book/std/standarTextDesc.do?lang=en">Support Korean Learning</a>
+								<ul style="display: none; top: 55px; visibility: visible;">
+									<li><a href="/epstopik/book/std/standarTextDesc.do?lang=en">Textbook for EPS-TOPIK</a></li>
+									<li><a href="/epstopik/book/pub/publicbookDesc.do?lang=en">Open Test</a></li>
+									<li><a href="/epstopik/book/self/selfStudy.do?lang=en">Self-study Text Book</a></li>
+								</ul>	
+                            </li>
+                            <li class="header-menu-box__ nav-item" style="z-index: 96;">
+                            	<a class="header-menu-box__ nav-link gnb05" href="/epstopik/cust/aid/NoticeList.do?lang=en">Customer Service</a> 
+								<ul style="display: none; top: 55px; visibility: visible;">
+									<li><a href="/epstopik/cust/aid/NoticeList.do?lang=en">Notice</a></li>
+									<li><a href="/epstopik/cust/aid/FaqList.do?lang=en">FAQ</a></li>
+								</ul>	
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="header-another-menu-box navbar-collapse justify-content-end">
+                        <ul class="header-menu-box__ navbar-nav another-menu justify-content-end">
+                            <li class="header-menu-box__ nav-item btn-li">
+                                <a class="header-menu-box__ nav-link btn-li" href="/epstopik/recp/guide/selectVisitGuideDesc.do?lang=en" alt="Registration by Visitng">Registration</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+        <!-- header 메뉴 박스 end -->
+	</header>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="clb"></div>
+</div>
+</div>
+<div id="visWrap">
+	<img src="/epstopik/images/home/new/sub_img1_Eng.png">
+</div>
+<div class="location">
+	<img src="/epstopik/images/home/icon_home.gif" align="absmiddle">
+	Home &gt; EPS-TOPIK &gt; Announcement of Test Date
+</div>
+
+
+
+
+
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		  </div>
+	
+	
+	<!-- body -->
+	<div id="bodyWrap">
+
+		<div id="leftWrap">
+		
+			
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script> 
+	/* snb on,off */
+	function snbOn(value,snbSize) {
+		
+	
+		for(z=1;z<=snbSize;z++) {
+			if(z==value) {
+				document.getElementById("snb"+z).classList.add("on");
+			} else {
+				document.getElementById("snb"+z).classList.remove("on");
+			}
+		}
+	}
+	
+	function snbOff(value,snb_value) {
+		
+	
+		for(z=1;z<=snbSize;z++) {
+			if(z==value) {
+				document.getElementById("snb"+z).classList.add("on");
+			} else {
+				document.getElementById("snb"+z).classList.remove("on");
+			}
+		}
+	}
+</script>
+
+<script language="javascript">
+	function Fullscreen(theURL){
+		//window.open(theURL,"","fullscreen=yes,type=FullWindow,scrollbars=no,resizable=no,menubar=no,status=no,toolbar=no, location=no, directories=no");
+		window.open(theURL,"","width="+ screen.width +",height="+screen.height+",fullscreen=yes");
+	}
+</script>	
+
+		
+			
+			
+			
+		
+			
+		
+			
+			
+			
+			
+			
+					
+				<script language="javascript">
+					var snbNum = 6;
+					var snbSize = 8;
+				</script>
+					
+			
+			
+						
+			
+			
+			
+			
+			
+			<div class="snb" id="snb">
+				<div class="snb_title">
+					<p>EPS-TOPIK</p>
+				</div>
+				<dl>
+					<dd><a href="/epstopik/abot/exam/selectTopikDesc.do?lang=en" id="snb1" onmouseover="snbOn(1,snbSize);" onmouseout="snbOff(snbNum,snbSize);">What is EPS-TOPIK?</a></dd>
+					<dd><a href="/epstopik/abot/exam/selectTopikDescSpecial.do?lang=en" id="snb2" onmouseover="snbOn(2,snbSize);" onmouseout="snbOff(snbNum,snbSize);">Special EPS-TOPIK</a></dd>
+					<dd><a href="/epstopik/abot/exam/selectStandardDesc.do?lang=en" id="snb3" onmouseover="snbOn(3,snbSize);" onmouseout="snbOff(snbNum,snbSize);">Testing Module</a></dd>
+					<dd><a href="/epstopik/abot/exam/selectGuideDesc.do?lang=en" id="snb4" onmouseover="snbOn(4,snbSize);" onmouseout="snbOff(snbNum,snbSize);">Application Form</a></dd>
+					<dd><a href="/epstopik/abot/exam/selectSechduleDescList.do?lang=en" id="snb5" onmouseover="snbOn(5,snbSize);" onmouseout="snbOff(snbNum,snbSize);">Schedule</a></dd>
+					<dd><a href="/epstopik/abot/exam/sechduleGuideList.do?lang=en" id="snb6" onmouseover="snbOn(6,snbSize);" onmouseout="snbOff(snbNum,snbSize);" class="on">Announcement of Test Date</a></dd>
+					<dd><a href="/epstopik/abot/exam/selectRuleDesc.do?lang=en" id="snb7" onmouseover="snbOn(7,snbSize);" onmouseout="snbOff(snbNum,snbSize);">Punishment of Wrongdoer</a></dd>
+					<dd><a href="/epstopik/pass/candidate/selectChart.do?lang=en" id="snb8" onmouseover="snbOn(8,snbSize);" onmouseout="snbOff(snbNum,snbSize);">Stats</a></dd>
+				</dl>
+			</div>
+		<script language="javascript">snbOn(snbNum,snbSize);</script>
+		
+			
+		
+	
+	
+	
+
+	
+				
+	<div class="bnrSide">
+				<dl>
+					<dd><a href="/epstopik/book/self/ebookIndex.do?lang=en" class="side1">E-Book</a></dd>
+					<dd><a href="javascript:Fullscreen('/epstopik/home/experience/examinee_screen.do?lang=en')" class="side2">Experience</a></dd>
+				</dl>
+			</div>
+
+	
+	
+		
+		</div>
+		
+		<!-- content -->
+		<div id="contentWrap">
+			<div class="sub_title"><span></span></div>
+			
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script language="javascript1.2" type="text/javaScript">
+
+	/**합격자 상세 조회 */
+	function testingPlanDetail( idx )
+	{
+	var form = document.listForm;
+	
+	if( idx != "" )
+	{
+		var tr = document.getElementById("tr_"+idx);
+		var tmp_lcnsId = tr.getAttribute("lcnsId");
+		var tmp_examYear = tr.getAttribute("examYear");
+		var tmp_examNot = tr.getAttribute("examNot");
+		var tmp_examNation = tr.getAttribute("examNation");
+		
+		form.tmp_lcnsId.value = tmp_lcnsId;
+		form.tmp_examYear.value = tmp_examYear;
+		form.tmp_examNot.value = tmp_examNot;
+		form.tmp_examNation.value = tmp_examNation;
+		form.lang.value="en";
+	}	
+		form.submit();
+}
+	/** 페이징  */	
+	function linkPage(pageNo){
+		document.listForm.lang.value="en";
+		document.listForm.pageIndex.value = pageNo;
+		document.listForm.action = "/epstopik/abot/exam/sechduleGuideList.do";
+	   	document.listForm.submit();
+	}
+
+	/** 접수자 목록  조회  */
+	function fn_selectList() {
+		document.listForm.lang.value="en";
+		document.listForm.pageIndex.value = 1;
+		document.listForm.action = "/epstopik/abot/exam/sechduleGuideList.do";
+	    document.listForm.submit();
+	}
+	
+</script>
+
+<h1>Announcement of Test Date</h1>
+<!--  <p style="padding-bottom:16px; font-size:14px;"><strong style="color:red;">※ Due to the spread of the COVID-19, EPS-TOPIK will be suspended for a while. We will notify you later.</strong></p>  --> 
+<form id="topikVO" name="listForm" action="/epstopik/abot/exam/sechduleGuideDetail.do" method="post">
+<input id="pageIndex" name="pageIndex" type="hidden" value="1">
+<input type="hidden" name="tmp_lcnsId">  
+<input type="hidden" name="tmp_examYear">  
+<input type="hidden" name="tmp_examNot">  
+<input type="hidden" name="tmp_examNation">  
+<input type="hidden" name="lang">
+			<div class="paragraph">
+			<ul>
+				<li>Examination Infomation
+					<ul>
+						<li> Click on the subject from the list, you can find detailed information.</li>
+					</ul>				
+				</li>
+			</ul>
+			<div class="selectForm">
+					year:
+					<select id="examYear" name="examYear" onchange="javascript:fn_selectList();">
+					<option value="">-select-</option>
+					<option value="2007">2007</option><option value="2008">2008</option><option value="2009">2009</option><option value="2010">2010</option><option value="2011">2011</option><option value="2012">2012</option><option value="2013">2013</option><option value="2014">2014</option><option value="2015">2015</option><option value="2016">2016</option><option value="2017">2017</option><option value="2018">2018</option><option value="2019">2019</option><option value="2020">2020</option><option value="2021">2021</option><option value="2022">2022</option><option value="2023">2023</option><option value="2024">2024</option><option value="2025" selected="selected">2025</option><option value="2026">2026</option>
+					</select>
+					
+					&nbsp;	 
+					
+					select of nation: <select id="schExamNation" name="schExamNation" onchange="javascript:fn_selectList();">
+					<option value="" selected="selected">-select-</option>
+					<option value="001">Uzbekistan</option><option value="002">Cambodia</option><option value="003">Pakistan</option><option value="004">Kyrgyzstan</option><option value="005">Bangladesh</option><option value="006">Nepal</option><option value="007">Sri Lanka</option><option value="008">Vietnam</option><option value="009">Myanmar</option><option value="010">Thailand</option><option value="011">Philippines</option><option value="012">Indonesia</option><option value="013">Mongolia</option><option value="014">China</option><option value="015">East Timor</option><option value="016">Laos</option><option value="017">Tajikistan</option><option value="999">Korea</option>
+					</select>
+					&nbsp;
+			</div>
+			<table class="tableType">
+			<colgroup>
+				<col width="100">
+				<col width="">
+				<col width="120">
+				<!-- <col width="160"> -->
+				<col width="110">
+			</colgroup>
+			<tbody><tr>
+				<th scope="col">Nation</th>
+				<th scope="col">subject</th>
+				<th scope="col">Type</th>
+				<!-- <th scope="col">Period</th> -->
+				<th scope="col">Announcement of Test Date</th>
+			</tr>
+			
+			
+				
+					
+					
+					
+					 
+					
+						<tr id="tr_1" lcnsid="001" examyear="2025" examnot="92" examnation="007">
+						<td>Sri Lanka</td>
+						<td class="left"><a href="#" onclick="testingPlanDetail(1)">2025 Skilled Workers Specialized in Root Industry Occupation in SriLanka(2nd)_Welding</a></td>
+						<td class="center">General (CBT)</td>
+						<td>Undecided</td>
+						</tr>
+						
+					
+						
+					
+									
+
+			
+			
+				
+					
+					
+					
+					 
+					
+						<tr id="tr_2" lcnsid="001" examyear="2025" examnot="101" examnation="001">
+						<td>Uzbekistan</td>
+						<td class="left"><a href="#" onclick="testingPlanDetail(2)">2025 Skilled Workers Specialized in Root Industry Occupation in Uzbekistan(2nd)_Welding</a></td>
+						<td class="center">General (CBT)</td>
+						<td>Undecided</td>
+						</tr>
+						
+					
+						
+					
+									
+
+			
+			
+				
+					
+					
+					
+					 
+					
+						<tr id="tr_3" lcnsid="001" examyear="2025" examnot="112" examnation="006">
+						<td>Nepal</td>
+						<td class="left"><a href="#" onclick="testingPlanDetail(3)">The 4th recruitment of the Point system in Nepal_Manufacturing(2)</a></td>
+						<td class="center">General (CBT)</td>
+						<td>2025-11-10</td>
+						</tr>
+						
+					
+						
+					
+									
+
+			
+			
+				
+					
+					
+					
+					 
+					
+						<tr id="tr_4" lcnsid="001" examyear="2025" examnot="108" examnation="010">
+						<td>Thailand</td>
+						<td class="left"><a href="#" onclick="testingPlanDetail(4)">2025 Special EPS-TOPIK in Thailand</a></td>
+						<td class="center">Special (CBT)</td>
+						<td>2025-11-10</td>
+						</tr>
+						
+					
+						
+					
+									
+
+			
+			
+				
+					
+					
+					
+					 
+					
+						<tr id="tr_5" lcnsid="001" examyear="2025" examnot="100" examnation="001">
+						<td>Uzbekistan</td>
+						<td class="left"><a href="#" onclick="testingPlanDetail(5)">2025 Skilled Workers Specialized in Root Industry Occupation in Uzbekistan(1st)_Welding</a></td>
+						<td class="center">General (CBT)</td>
+						<td>Undecided</td>
+						</tr>
+						
+					
+						
+					
+									
+
+			
+			
+				
+					
+					
+					
+					 
+					
+						<tr id="tr_6" lcnsid="001" examyear="2025" examnot="80" examnation="006">
+						<td>Nepal</td>
+						<td class="left"><a href="#" onclick="testingPlanDetail(6)">The 4th recruitment of the Point system in Nepal_Manufacturing</a></td>
+						<td class="center">General (CBT)</td>
+						<td>2025-11-10</td>
+						</tr>
+						
+					
+						
+					
+									
+
+			
+			
+				
+					
+					
+					
+					 
+					
+						<tr id="tr_7" lcnsid="001" examyear="2025" examnot="91" examnation="007">
+						<td>Sri Lanka</td>
+						<td class="left"><a href="#" onclick="testingPlanDetail(7)">2025 Skilled Workers Specialized in Root Industry Occupation in SriLanka(1st)_Welding</a></td>
+						<td class="center">General (CBT)</td>
+						<td>Undecided</td>
+						</tr>
+						
+					
+						
+					
+									
+
+			
+			
+				
+					
+					
+					
+					 
+					
+						<tr id="tr_8" lcnsid="001" examyear="2025" examnot="57" examnation="003">
+						<td>Pakistan</td>
+						<td class="left"><a href="#" onclick="testingPlanDetail(8)">2025 Skilled Workers Specialized in Root Industry Occupation in Pakistan(2nd)_Mold</a></td>
+						<td class="center">General (CBT)</td>
+						<td>2025-11-02</td>
+						</tr>
+						
+					
+						
+					
+									
+
+			
+			
+				
+					
+					
+					
+					 
+					
+						<tr id="tr_9" lcnsid="001" examyear="2025" examnot="56" examnation="003">
+						<td>Pakistan</td>
+						<td class="left"><a href="#" onclick="testingPlanDetail(9)">2025 Skilled Workers Specialized in Root Industry Occupation in Pakistan(2nd)_Welding</a></td>
+						<td class="center">General (CBT)</td>
+						<td>2025-11-02</td>
+						</tr>
+						
+					
+						
+					
+									
+
+			
+			
+				
+					
+					
+					
+					 
+					
+						<tr id="tr_10" lcnsid="001" examyear="2025" examnot="47" examnation="003">
+						<td>Pakistan</td>
+						<td class="left"><a href="#" onclick="testingPlanDetail(10)">2025 Skilled Workers Specialized in Root Industry Occupation in Pakistan(1st)_Welding</a></td>
+						<td class="center">General (CBT)</td>
+						<td>2025-10-23</td>
+						</tr>
+						
+					
+						
+					
+									
+
+			
+			
+			</tbody></table>
+			<br>
+				<!-- record, paging -->
+				<div class="tableFoot">
+					<!-- record -->
+					<div class="pagingArea">
+						<strong>1</strong>&nbsp;<a href="?pageIndex=2" onclick="linkPage(2);return false; ">2</a>&nbsp;<a href="?pageIndex=3" onclick="linkPage(3);return false; ">3</a>&nbsp;<a href="?pageIndex=4" onclick="linkPage(4);return false; ">4</a>&nbsp;<a href="?pageIndex=5" onclick="linkPage(5);return false; ">5</a>&nbsp;<a href="?pageIndex=6" onclick="linkPage(6);return false; ">6</a>&nbsp;<a href="?pageIndex=7" onclick="linkPage(7);return false; ">7</a>&nbsp;<a href="?pageIndex=8" onclick="linkPage(8);return false; ">8</a>&nbsp;<a href="?pageIndex=9" onclick="linkPage(9);return false; ">9</a>&nbsp;<a href="?pageIndex=10" onclick="linkPage(10);return false; ">10</a>&nbsp;
+						
+					</div>
+					<div class="clb"></div>
+				</div>
+			</div>
+</form>
+		</div>
+		
+	</div>	
+	
+
+<!-- footer -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <!-- footer start -->
+    <footer>
+        <div class="container">
+            <div class="footer-top-box">
+                <div class="row justify-content-lg-start">
+                    <div class="col-2">                        
+                        <a href="/epstopik/home/main/mainPage.do?lang=en" class="on">
+                        	<img src="/epstopik/images/home/new/eng/footer-logo.png" alt="eps-topik 로고 이미지">
+                        </a>
+                    </div>
+                    <div class="col-4">
+                        <span class="sitemap-span">
+                            <a href="/epstopik/home/site/siteMap.do?lang=en">
+                                Site map
+                            </a>
+                        </span>
+                        <span class="line-span">|</span>
+                        <span class="custmer-span">
+                            <a href="/epstopik/cust/aid/NoticeList.do?lang=en">
+                                Customer center
+                            </a>
+                        </span>
+                    </div>
+                    <div class="col-6 text-end">
+						<a href="http://www.hrdkorea.or.kr/" target="_blank" title="[새창]"><img src="/epstopik/images/home/new/eng/footer-icon1.png" alt="HRDK 한국산업인력공단 로고 새창" align="absmiddle"></a>&nbsp;&nbsp;&nbsp;&nbsp;
+						<a href="http://www.moel.go.kr/" target="_blank" title="[새창]"><img src="/epstopik/images/home/new/eng/footer-icon2.png" alt="고용노동부로고 새창" align="absmiddle"></a>&nbsp;&nbsp;&nbsp;&nbsp;
+						<a href="http://www.moj.go.kr/" target="_blank" title="[새창]"><img src="/epstopik/images/home/new/eng/footer-icon3.png" alt="법무부로고 새창" align="absmiddle"></a>
+                        <a href="http://www.webwatch.or.kr/Situation/WA_Situation.html?MenuCD=110" target="_blank" title="[새창]">
+                        	<img src="/epstopik/images/home/new/eng/footer-icon5.png" title="국가 공인 인증기관 : 웹와치 새창" alt="과학기술정보통신부 WEB ACCESSIBILITY 마크(웹 접근성 품질인증마크) 새창" class="footer-icon04">
+                        </a>
+                        <a href="#" title="[새창]" style="cursor: pointer;" onclick="window.open('http://www.hrdkorea.or.kr/main/popup/openPop.html', 'popup', 'width=950,height=800,top=150,left=150,scrollbars=yes'); return false;" target="_blank">
+                        	<img src="/epstopik/images/home/new/eng/footer-icon4.png" alt="한국산업인력공단 반부패 청렴기반 로고 새창" class="footer-icon05">
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom-box">
+                <div class="row">
+                    <div class="col-12">
+                        <p class="fw-bold">우)44538 울산광역시 중구 종가로 345 한국산업인력공단</p>
+                        <p>Copyright(c)2009.all right reserved. Human Resources Development Service of Korea</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <!-- footer end -->
+
+
+</body></html>

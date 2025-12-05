@@ -15,20 +15,35 @@ URL_FINAL = "https://epstopik.hrdkorea.or.kr/epstopik/pass/candidate/sucessCandi
 CACHE_FILE = EPS_FINAL
 
 
-def ambil_data_final():
+def ambil_html(url: str, fallback_filename: str) -> str:
     try:
         result = subprocess.run(
-            ["curl", "-s", "-A", "Mozilla/5.0", URL_FINAL],
+            ["curl", "-sL", "-A", "Mozilla/5.0", url],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             timeout=10,
         )
+        if result.returncode == 0 and result.stdout:
+            return result.stdout.decode("utf-8", errors="replace")
+        logger.error(f"Curl error ({url}): {result.stderr.decode(errors='replace')}")
+    except Exception:
+        logger.exception("curl exception")
 
-        if result.returncode != 0:
-            logger.error(f"Curl error: {result.stderr.decode()}")
+    local_path = os.path.join("data", fallback_filename)
+    if os.path.exists(local_path):
+        try:
+            with open(local_path, "r", encoding="utf-8") as f:
+                return f.read()
+        except Exception:
+            logger.exception("Gagal baca fallback %s", local_path)
+    return ""
+
+
+def ambil_data_final():
+    try:
+        html_text = ambil_html(URL_FINAL, "pass2.html")
+        if not html_text:
             return []
-
-        html_text = result.stdout.decode("utf-8")
 
         soup = BeautifulSoup(html_text, "html.parser")
         rows = soup.select("table.tableType tr[id^='tr_']")

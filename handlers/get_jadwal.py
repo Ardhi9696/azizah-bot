@@ -17,20 +17,36 @@ URL_JADWAL = (
 CACHE_FILE = JADWAL_EPS
 
 
-def ambil_data_jadwal():
+def ambil_html(url: str, fallback_filename: str) -> str:
     try:
         result = subprocess.run(
-            ["curl", "-s", "-A", "Mozilla/5.0", URL_JADWAL],
+            ["curl", "-sL", "-A", "Mozilla/5.0", url],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             timeout=10,
         )
+        if result.returncode == 0 and result.stdout:
+            return result.stdout.decode("utf-8", errors="replace")
+        logger.error(f"Curl error ({url}): {result.stderr.decode(errors='replace')}")
+    except Exception:
+        logger.exception("curl exception")
 
-        if result.returncode != 0:
-            logger.error(f"Curl error: {result.stderr.decode()}")
+    # fallback ke file lokal jika ada
+    local_path = os.path.join("data", fallback_filename)
+    if os.path.exists(local_path):
+        try:
+            with open(local_path, "r", encoding="utf-8") as f:
+                return f.read()
+        except Exception:
+            logger.exception("Gagal baca fallback %s", local_path)
+    return ""
+
+
+def ambil_data_jadwal():
+    try:
+        html_text = ambil_html(URL_JADWAL, "jadwal.html")
+        if not html_text:
             return []
-
-        html_text = result.stdout.decode("utf-8")
 
         soup = BeautifulSoup(html_text, "html.parser")
         rows = soup.select("table.tableType tr[id^='tr_']")
