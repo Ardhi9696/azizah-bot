@@ -20,7 +20,7 @@ CACHE_FILE = JADWAL_EPS
 def ambil_html(url: str, fallback_filename: str) -> str:
     try:
         result = subprocess.run(
-            ["curl", "-sL", "-A", "Mozilla/5.0", url],
+            ["curl", "-sLk", "-A", "Mozilla/5.0", url],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             timeout=10,
@@ -31,14 +31,18 @@ def ambil_html(url: str, fallback_filename: str) -> str:
     except Exception:
         logger.exception("curl exception")
 
-    # fallback ke file lokal jika ada
-    local_path = os.path.join("data", fallback_filename)
-    if os.path.exists(local_path):
-        try:
-            with open(local_path, "r", encoding="utf-8") as f:
-                return f.read()
-        except Exception:
-            logger.exception("Gagal baca fallback %s", local_path)
+    # fallback ke file lokal jika ada (cari di root lalu data/)
+    candidates = [
+        os.path.join(fallback_filename),
+        os.path.join("data", fallback_filename),
+    ]
+    for local_path in candidates:
+        if os.path.exists(local_path):
+            try:
+                with open(local_path, "r", encoding="utf-8") as f:
+                    return f.read()
+            except Exception:
+                logger.exception("Gagal baca fallback %s", local_path)
     return ""
 
 
